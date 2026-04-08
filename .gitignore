@@ -1,0 +1,40 @@
+# Binários
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Build
+dist/
+build/
+tmp/
+
+# Dependências
+vendor/
+
+# Ambiente
+.env
+config/app.env
+*.env
+
+# Swagger gerado
+docs/swagger/
+
+# Docker volumes
+pgdata/
+pgadmin-data/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*.DS_Store
+
+# Cobertura de testes
+*.out
+coverage.html
+
+# Logs
+*.log

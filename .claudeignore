@@ -1,0 +1,36 @@
+# Dependencias
+node_modules/
+vendor/
+
+# Build e output
+dist/
+build/
+bin/
+tmp/
+
+# Lock files
+*.lock
+package-lock.json
+
+# Cache
+__pycache__/
+.cache/
+*.pyc
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Docker volumes
+pgdata/
+pgadmin-data/
+
+# Binarios e assets grandes
+*.exe
+*.dll
+*.so
+*.dylib
+*.zip
+*.tar.gz
