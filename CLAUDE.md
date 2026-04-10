@@ -28,6 +28,29 @@ Go | chi (router HTTP) | PostgreSQL | Flyway | pgAdmin | Git | Swagger (swaggo/s
 - `git pull --rebase` sempre ao atualizar branches (nunca merge de atualizacao)
 - Convencao de commits: `feat:`, `fix:`, `chore:`, `test:`, `docs:`
 
+### Push para o GitHub
+
+Quando o usuario solicitar push, executar conforme o contexto da branch atual:
+
+```bash
+# Push da branch atual (feature, hotfix, etc.) — primeiro push
+git push --set-upstream origin <branch-atual>
+
+# Push da branch atual — pushes subsequentes
+git push
+
+# Apos merge de feature na developer, push da developer
+git checkout developer && git push
+
+# Apos merge de release/hotfix na master, push da master
+git checkout master && git push
+```
+
+**Regras para push:**
+- Nunca fazer `git push --force` em `master` ou `developer`
+- Em feature branches, `--force-with-lease` e permitido apos rebase
+- Confirmar com o usuario antes de fazer push em `master`
+
 ## Estrategia de Repository
 
 - Interfaces de repository definidas em `internal/domain/`
@@ -44,6 +67,17 @@ Go | chi (router HTTP) | PostgreSQL | Flyway | pgAdmin | Git | Swagger (swaggo/s
 - Erros retornados explicitamente, nunca panic
 - `context.Context` como primeiro parametro em funcoes de I/O
 - Structs de dominio em `internal/domain/`, sem dependencia de frameworks
+
+## Seguranca (OWASP Top 10)
+
+Ao implementar autenticacao, endpoints HTTP, validacao de entrada ou revisao de seguranca, usar a skill `/owasp-security` disponivel em `.agents/skills/owasp-security/`.
+
+Pontos criticos para este projeto (Go + chi + PostgreSQL):
+- **A01 Broken Access Control:** verificar tipo de usuario (CLIENTE/PROFISSIONAL/ADMIN) em todos os handlers; nunca expor dados de outro usuario
+- **A02 Cryptographic Failures:** senha com bcrypt (custo >= 12); JWT secret via env, nunca hardcoded
+- **A03 Injection:** queries PostgreSQL sempre parametrizadas (`pgx` usa `$1, $2...`); nunca concatenar input do usuario em SQL
+- **A07 Auth Failures:** rate limiting em `/auth/*`; tokens JWT com expiracao curta
+- **A09 Logging:** logar tentativas de login, acessos negados e mudancas de status criticas
 
 ## Regras Criticas
 
