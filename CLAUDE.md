@@ -68,16 +68,38 @@ git checkout master && git push
 - `context.Context` como primeiro parametro em funcoes de I/O
 - Structs de dominio em `internal/domain/`, sem dependencia de frameworks
 
-## Seguranca (OWASP Top 10)
+## Seguranca (OWASP Top 10:2025)
 
-Ao implementar autenticacao, endpoints HTTP, validacao de entrada ou revisao de seguranca, usar a skill `/owasp-security` disponivel em `.agents/skills/owasp-security/`.
+**REGRA OBRIGATORIA:** Toda nova etapa do PLANO.md DEVE aplicar a skill `/owasp-security` durante implementacao.
 
-Pontos criticos para este projeto (Go + chi + PostgreSQL):
-- **A01 Broken Access Control:** verificar tipo de usuario (CLIENTE/PROFISSIONAL/ADMIN) em todos os handlers; nunca expor dados de outro usuario
-- **A02 Cryptographic Failures:** senha com bcrypt (custo >= 12); JWT secret via env, nunca hardcoded
-- **A03 Injection:** queries PostgreSQL sempre parametrizadas (`pgx` usa `$1, $2...`); nunca concatenar input do usuario em SQL
-- **A07 Auth Failures:** rate limiting em `/auth/*`; tokens JWT com expiracao curta
-- **A09 Logging:** logar tentativas de login, acessos negados e mudancas de status criticas
+Ao implementar autenticacao, endpoints HTTP, validacao de entrada, tratamento de erros ou revisao de seguranca, executar:
+```bash
+/owasp-security
+```
+
+A skill cobre todas as 10 categorias OWASP 2025 com exemplos em Go + chi + PostgreSQL:
+
+| Categoria | Foco |
+|-----------|------|
+| **A01** | Broken Access Control (ownership, SSRF, CSRF) |
+| **A02** | Security Misconfiguration (headers, config, Swagger) |
+| **A03** | Software Supply Chain Failures (govulncheck, go.sum) |
+| **A04** | Cryptographic Failures (bcrypt, JWT, TLS) |
+| **A05** | Injection (SQL parametrizado, XSS, command injection) |
+| **A06** | Insecure Design (rate limiting, threat modeling) |
+| **A07** | Authentication Failures (timing attacks, NIST 800-63b) |
+| **A08** | Data Integrity Failures (validacao, go.sum verify) |
+| **A09** | Logging & Alerting Failures (slog, eventos criticos) |
+| **A10** | Exceptional Conditions (fail closed, rollback, defer) |
+
+Checklist minimo por etapa:
+- Autenticacao/Autorizacao implementada? → usar skill secoes A01, A07
+- Armazenar senhas? → bcrypt cost >= 12 (A04)
+- Query ao banco? → pgx parametrizado $1, $2... (A05)
+- Handler HTTP novo? → validacao completa + rate limiting (A06)
+- Erro possivel? → fail closed, defer cleanup (A10)
+- Logando dados? → nunca senhas/tokens/CPF (A09)
+- Dependencias adicionadas? → govulncheck na CI (A03)
 
 ## Regras Criticas
 
