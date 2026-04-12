@@ -738,36 +738,141 @@ GROUP BY s.profissional_id, sol.endereco_id, sol.cliente_id, DATE_TRUNC('week', 
 
 ## 18. Stack e Estrutura do Projeto
 
-**Stack:** Go · chi · PostgreSQL · Flyway · pgAdmin · Git · Swagger (swaggo/swag)
+**Stack Backend:** Go · chi · PostgreSQL · Flyway · pgAdmin · Git · Swagger (swaggo/swag)
+**Stack Frontend:** SvelteKit 5 · TypeScript · Vite
 
 ```
 diarygo/
-├── cmd/api/            # main.go — entrypoint do servidor HTTP
-├── internal/
-│   ├── domain/         # Entidades, interfaces de repository e regras de negócio
-│   ├── handler/        # Handlers HTTP (chi) com anotações swaggo
-│   ├── service/        # Use cases / lógica de aplicação
-│   ├── repository/
-│   │   ├── memory/     # Implementações in-memory (desenvolvimento e testes unitários)
-│   │   └── postgres/   # Implementações PostgreSQL (produção)
-│   └── middleware/     # Auth JWT, logging, etc.
-├── pkg/                # Código reutilizável e exportável
-├── migrations/         # Scripts SQL do Flyway (V1__*, V2__*, etc.)
-├── config/             # Configurações e env
-├── docs/swagger/       # Gerado pelo swag init — não editar manualmente
-├── docker-compose.yml  # PostgreSQL + pgAdmin + Flyway
-├── PLANO.md            # Plano de implementação por etapas
-└── go.mod
+├── backend/
+│   ├── cmd/api/            # main.go — entrypoint do servidor HTTP
+│   ├── internal/
+│   │   ├── domain/         # Entidades, interfaces de repository e regras de negócio
+│   │   ├── handler/        # Handlers HTTP (chi) com anotações swaggo
+│   │   ├── service/        # Use cases / lógica de aplicação
+│   │   ├── repository/
+│   │   │   ├── memory/     # Implementações in-memory (desenvolvimento e testes unitários)
+│   │   │   └── postgres/   # Implementações PostgreSQL (produção)
+│   │   └── middleware/     # Auth JWT, logging, etc.
+│   ├── pkg/                # Código reutilizável e exportável
+│   ├── migrations/         # Scripts SQL do Flyway (V1__*, V2__*, etc.)
+│   ├── config/             # Configurações e env
+│   └── go.mod
+├── frontend/
+│   ├── src/
+│   │   ├── lib/
+│   │   │   ├── api/        # Cliente HTTP (fetch wrapper)
+│   │   │   ├── components/ # Componentes Svelte reutilizáveis
+│   │   │   ├── stores/     # Estado global (auth, toasts)
+│   │   │   └── types/      # Tipos TypeScript
+│   │   ├── routes/         # Páginas SvelteKit (file-based routing)
+│   │   └── app.css         # Design system global
+│   ├── package.json
+│   └── svelte.config.js
+├── docs/swagger/           # Gerado pelo swag init — não editar manualmente
+├── docker-compose.yml      # PostgreSQL + pgAdmin + Flyway
+├── PLANO.md                # Plano de implementação por etapas
+└── README.md
 ```
 
-**Comandos rápidos:**
+### Como Rodar o Projeto
+
+#### Backend
+
 ```bash
-go run cmd/api/main.go      # rodar
-go test ./...               # testar
-gofmt -w .                  # formatar
-go vet ./...                # verificar
-docker-compose up -d        # subir infraestrutura
+cd backend
+
+# Criar config/app.env (na primeira vez)
+cat > config/app.env << 'EOF'
+PORT=8080
+JWT_SECRET=segredo-com-no-minimo-32-caracteres-aqui
+JWT_EXPIRATION_MINUTES=15
+ENV=development
+EOF
+
+# Rodar o servidor
+go run cmd/api/main.go
 ```
+
+#### Frontend
+
+```bash
+cd frontend
+
+# Instalar dependências (na primeira vez)
+npm install
+
+# Rodar em modo desenvolvimento
+npm run dev
+```
+
+#### Ambos simultaneamente (dois terminais)
+
+```bash
+# Terminal 1 — Backend
+cd backend && go run cmd/api/main.go
+
+# Terminal 2 — Frontend
+cd frontend && npm run dev
+```
+
+**Links de acesso:**
+
+| Serviço | URL |
+|---|---|
+| Frontend | http://localhost:5173 |
+| Backend API | http://localhost:8080 |
+| Swagger UI | http://localhost:8080/swagger/index.html |
+| Health check | http://localhost:8080/health |
+
+---
+
+## 19. Frontend — Documentação das Páginas
+
+> **Nota:** Esta seção é atualizada automaticamente sempre que há alterações no frontend.
+
+**Design system:** inspirado no [Resend](https://resend.com) — fundo preto `#000000`, frost borders `rgba(214,235,253,0.19)`, tipografia Inter, paleta de acentos (orange, green, blue, yellow, red), botões pill `border-radius: 9999px`.
+
+### Páginas Disponíveis
+
+| Rota | Página | Acesso | Descrição |
+|---|---|---|---|
+| [`/`](http://localhost:5173/) | Home | Público | Landing page com hero, como funciona e tipos de serviço |
+| [`/login`](http://localhost:5173/login) | Login | Público | Autenticação com email e senha |
+| [`/registro`](http://localhost:5173/registro) | Registro Cliente | Público | Criação de conta tipo CLIENTE com medidor de força de senha |
+| [`/registro/profissional`](http://localhost:5173/registro/profissional) | Registro Diarista | Público | Criação de conta tipo PROFISSIONAL com requisitos de documentação |
+| [`/dashboard`](http://localhost:5173/dashboard) | Dashboard | Autenticado | Painel adaptado por tipo: CLIENTE / PROFISSIONAL / ADMIN |
+| [`/recuperar-senha`](http://localhost:5173/recuperar-senha) | Recuperar Senha | Público | Solicita token de recuperação (token exibido em dev) |
+| [`/redefinir-senha`](http://localhost:5173/redefinir-senha) | Redefinir Senha | Público | Redefine senha com token válido (aceita token via query string `?token=`) |
+
+### API — Rotas Backend
+
+| Método | Rota | Autenticação | Descrição |
+|---|---|---|---|
+| `GET` | [`/health`](http://localhost:8080/health) | — | Health check |
+| `POST` | `/api/v1/auth/registro/cliente` | — | Registrar cliente |
+| `POST` | `/api/v1/auth/registro/profissional` | — | Registrar diarista |
+| `POST` | `/api/v1/auth/login` | — | Login → retorna JWT |
+| `POST` | `/api/v1/auth/solicitar-recuperacao-senha` | — | Solicitar token de recuperação |
+| `POST` | `/api/v1/auth/redefinir-senha` | — | Redefinir senha com token |
+| `GET` | [`/api/v1/me`](http://localhost:8080/api/v1/me) | Bearer JWT | Retorna payload do token |
+| `GET` | [`/swagger/index.html`](http://localhost:8080/swagger/index.html) | — | Documentação Swagger UI |
+
+### Componentes Globais
+
+| Componente | Localização | Descrição |
+|---|---|---|
+| `Navbar` | `src/lib/components/Navbar.svelte` | Barra de navegação responsiva com links por tipo de usuário |
+| `Toast` | `src/lib/components/Toast.svelte` | Notificação flutuante (success/error/info) com auto-dismiss |
+| `ToastContainer` | `src/lib/components/ToastContainer.svelte` | Gerencia a fila de toasts |
+
+### Stores
+
+| Store | Arquivo | Descrição |
+|---|---|---|
+| `auth` | `src/lib/stores/auth.ts` | Token JWT, payload, persistência em localStorage |
+| `isAuthenticated` | derivado de `auth` | Boolean reativo |
+| `currentUser` | derivado de `auth` | Payload do token (email, tipo, sub) |
+| `toasts` | `src/lib/stores/toasts.ts` | Fila de notificações globais |
 
 ---
 

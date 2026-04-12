@@ -30,7 +30,9 @@ Go | chi (router HTTP) | PostgreSQL | Flyway | pgAdmin | Git | Swagger (swaggo/s
 
 ### Push para o GitHub
 
-Quando o usuario solicitar push, executar conforme o contexto da branch atual:
+**REGRA OBRIGATORIA:** NUNCA executar `git push` sem antes perguntar ao usuario e aguardar confirmacao explicita. Isso vale para qualquer branch, em qualquer situacao, mesmo que o usuario ja tenha pedido push em sessoes anteriores. Cada push exige uma nova confirmacao.
+
+Quando o usuario confirmar, executar conforme o contexto da branch atual:
 
 ```bash
 # Push da branch atual (feature, hotfix, etc.) — primeiro push
@@ -49,7 +51,7 @@ git checkout master && git push
 **Regras para push:**
 - Nunca fazer `git push --force` em `master` ou `developer`
 - Em feature branches, `--force-with-lease` e permitido apos rebase
-- Confirmar com o usuario antes de fazer push em `master`
+- Sempre confirmar com o usuario antes de fazer push em qualquer branch
 
 ## Estrategia de Repository
 
@@ -130,13 +132,52 @@ Checklist minimo por etapa:
 ## Comandos Rapidos
 
 ```bash
+# Backend
+cd backend
 go run cmd/api/main.go                    # rodar (sem banco nas Etapas 0-11)
 go test ./...                             # testar
 gofmt -w .                                # formatar
 go vet ./...                              # verificar
-swag init -g cmd/api/main.go -o docs/swagger  # gerar Swagger
+swag init -g cmd/api/main.go -o ../docs/swagger  # gerar Swagger
 docker-compose up -d                      # infra (Etapa 12+)
+
+# Frontend
+cd frontend
+npm run dev                               # rodar em modo desenvolvimento
+npm run build                             # build de producao
+npm run preview                           # preview do build
 ```
+
+## Rodar o Projeto Apos Alteracoes
+
+**REGRA OBRIGATORIA:** Sempre que terminar uma alteracao (backend ou frontend), rodar o projeto e exibir os links de acesso com todas as rotas disponíveis para facilitar testes manuais. Formato obrigatorio de saida:
+
+```
+Backend rodando em: http://localhost:8080
+Swagger UI:         http://localhost:8080/swagger/index.html
+
+API — Rotas disponiveis:
+  GET  http://localhost:8080/health
+  POST http://localhost:8080/api/v1/auth/registro/cliente
+  POST http://localhost:8080/api/v1/auth/registro/profissional
+  POST http://localhost:8080/api/v1/auth/login
+  POST http://localhost:8080/api/v1/auth/solicitar-recuperacao-senha
+  POST http://localhost:8080/api/v1/auth/redefinir-senha
+  GET  http://localhost:8080/api/v1/me  (requer Bearer token)
+
+Frontend rodando em: http://localhost:5173
+
+Frontend — Paginas disponiveis:
+  http://localhost:5173/                         Home
+  http://localhost:5173/login                    Login
+  http://localhost:5173/registro                 Registro de cliente
+  http://localhost:5173/registro/profissional    Registro de diarista
+  http://localhost:5173/dashboard                Dashboard (requer login)
+  http://localhost:5173/recuperar-senha          Recuperar senha
+  http://localhost:5173/redefinir-senha          Redefinir senha
+```
+
+Listar TODAS as rotas — incluindo novas rotas adicionadas na alteracao em destaque.
 
 ## Fase Atual: MVP
 
