@@ -133,25 +133,69 @@ Vantagens: sem Docker obrigatório para desenvolver, testes unitários triviais,
 **Objetivo:** registro e login funcional para os três tipos de usuário. Dados em memória.
 
 ### Domínio
-- [ ] `internal/domain/usuario.go` — struct `Usuario`, tipos (`CLIENTE`, `PROFISSIONAL`, `ADMIN`), erros de domínio
-- [ ] `internal/domain/auth.go` — interface `UsuarioRepository`, struct `Credenciais`, struct `TokenPayload`
+- [x] `internal/domain/usuario.go` — struct `Usuario`, tipos (`CLIENTE`, `PROFISSIONAL`, `ADMIN`), erros de domínio, validações (email, senha NIST 800-63b, tipo)
+- [x] `internal/domain/auth.go` — interface `UsuarioRepository` (composição Reader+Writer), DTOs (`RegistroRequest`, `LoginRequest`, `VerificarEmailRequest`), `TokenPayload` com claims JWT
 
 ### Repository (in-memory)
-- [ ] `internal/repository/memory/usuario.go` — implementa `UsuarioRepository` com `map[uuid.UUID]Usuario` + mutex
+- [x] `internal/repository/memory/usuario.go` — implementa `UsuarioRepository` com `map[uuid.UUID]*Usuario` + `map[string]uuid.UUID` (índice por email) + `sync.RWMutex`, retorna cópias para evitar mutação
+
+### Config
+- [x] `internal/config/config.go` — carrega variáveis de ambiente, valida JWT_SECRET >= 32 chars (warning em dev, fatal em prod)
 
 ### Service
-- [ ] `internal/service/auth_service.go` — `Registrar`, `Login`, `GerarToken` (JWT), `ValidarToken`
+- [x] `internal/service/auth_service.go` — `Registrar`, `Login`, `GerarToken` (JWT HS256), `ValidarToken` (bloqueia alg:none), `VerificarEmail`
+- [x] Proteção contra timing attack no Login (bcrypt nos dois caminhos — OWASP A07)
+- [x] Custo bcrypt 12 em produção, `BcryptCostTeste` (4) para testes
 
 ### Handler
-- [ ] `POST /auth/registro/cliente` — cria usuário + cliente
-- [ ] `POST /auth/registro/profissional` — cria usuário + profissional (status PENDENTE)
-- [ ] `POST /auth/login` — retorna JWT
-- [ ] `POST /auth/verificar-email` — ativa email
+- [x] `POST /auth/registro/cliente` — cria usuário tipo CLIENTE
+- [x] `POST /auth/registro/profissional` — cria usuário tipo PROFISSIONAL
+- [x] `POST /auth/login` — retorna JWT (Bearer token, 15 min)
+- [x] `POST /auth/verificar-email` — ativa email com código (funcional, mas sem envio real de email)
+- [x] `internal/handler/response.go` — helpers `RespostaJSON` e `RespostaErro`
+- [x] MaxBytesReader(1MB) em todos os handlers (OWASP A06)
+- [x] Mapeamento de erros de domínio para status HTTP corretos
 
 ### Middleware
-- [ ] `internal/middleware/auth.go` — valida JWT, injeta usuário no contexto
+- [x] `internal/middleware/auth.go` — `Autenticar` (JWT), `RequererTipo` (autorização), `UsuarioDoContexto` (helper)
 
-**Critério de conclusão:** testes unitários do service e testes HTTP cobrindo registro, login, token inválido e rota protegida — tudo sem banco.
+### Integração
+- [x] `cmd/api/main.go` — DI completa (repo → service → handler), slog estruturado, httprate 10/min em /auth/*, security headers OWASP, rota protegida /api/v1/me
+
+### Testes
+- [x] `internal/service/auth_service_test.go` — 16 testes unitários (registro, login, token, verificação email)
+- [x] `internal/handler/auth_handler_test.go` — 11 testes HTTP (registro, login, verificação, rotas protegidas)
+- [x] `internal/middleware/auth_test.go` — 8 testes de middleware (autenticação, autorização, contexto)
+
+### Pendente: Ajustes de Verificação de Email (Opção B)
+
+Decisão: o campo `EmailVerificado` existe na struct `Usuario` para uso futuro, mas **o login NÃO exige** `email_verificado = true` no MVP. A verificação real de email será implementada na **Etapa 9 (Notificações)**, quando houver infra de envio de email.
+
+- [x] Remover `CodigoVerificacao` do `RegistroResponse` (não retornar código fake na resposta)
+- [x] Remover geração de `CodigoVerificacao` do método `Registrar` no service
+- [x] Remover endpoint `POST /auth/verificar-email` e método `VerificarEmail` do service
+- [x] Remover `VerificarEmailRequest` e `ErrCodigoVerificacaoInvalido` do domínio
+- [x] Remover campo `CodigoVerificacao` da struct `Usuario` (não faz sentido sem envio real)
+- [x] Atualizar testes para refletir a remoção (remover testes de verificação de email)
+- [x] Garantir que `Login` **NÃO** verifica `EmailVerificado` (já é o comportamento atual — apenas documentar)
+
+### Pendente: Recuperação de Senha
+
+Fluxo de recuperação de senha para o MVP (sem envio de email real — em dev, retorna token na resposta; em prod, loga o token):
+
+- [x] `internal/domain/auth.go` — adicionar `SolicitarRecuperacaoRequest{Email}`, `SolicitarRecuperacaoResponse`, `RedefinirSenhaRequest{Token, NovaSenha}`
+- [x] `internal/domain/usuario.go` — adicionar `ErrTokenRecuperacaoInvalido` e `ErrTokenRecuperacaoExpirado`
+- [x] `internal/domain/usuario.go` — adicionar campos `TokenRecuperacao` e `TokenRecuperacaoExpira` na struct `Usuario`
+- [x] `internal/domain/auth.go` — adicionar `BuscarPorTokenRecuperacao` na interface `UsuarioReader`
+- [x] `internal/repository/memory/usuario.go` — implementar `BuscarPorTokenRecuperacao`
+- [x] `internal/service/auth_service.go` — `SolicitarRecuperacao(ctx, req)`: gera token UUID, salva no usuário com expiração (1h), retorna token em dev
+- [x] `internal/service/auth_service.go` — `RedefinirSenha(ctx, req)`: valida token + expiração, hash nova senha com bcrypt, limpa token
+- [x] `POST /auth/solicitar-recuperacao-senha` — solicita token de recuperação
+- [x] `POST /auth/redefinir-senha` — redefine senha com token válido
+- [x] Testes unitários: solicitação (email existente/inexistente), redefinição, token expirado, token inválido, token vazio, nova senha fraca
+- [x] Testes HTTP: endpoints de recuperação com cenários de sucesso e erro
+
+**Critério de conclusão:** testes unitários do service e testes HTTP cobrindo registro, login, recuperação de senha, token inválido e rota protegida — tudo sem banco. Login NÃO exige email verificado.
 
 ---
 
@@ -297,17 +341,25 @@ Vantagens: sem Docker obrigatório para desenvolver, testes unitários triviais,
 
 ---
 
-## Etapa 9 — Notificações
+## Etapa 9 — Notificações e Verificação Real de Email
 
-**Objetivo:** sistema de notificações multicanal. Dados em memória.
+**Objetivo:** sistema de notificações multicanal e ativação da verificação real de email. Dados em memória.
 
+### Notificações
 - [ ] `internal/domain/notificacao.go` — struct, interface `NotificacaoRepository`, canais (PUSH, EMAIL, SMS, IN_APP)
 - [ ] `internal/repository/memory/notificacao.go` — implementação in-memory
 - [ ] `internal/service/notificacao_service.go` — interface `Notificador` + implementações stub (MVP envia apenas e-mail/in-app)
 - [ ] Integrar notificações nos eventos: solicitação criada, profissional atribuída, véspera de serviço, check-in, conclusão, avaliação recebida
 - [ ] `GET /notificacoes` · `PUT /notificacoes/:id/lida`
 
-**Critério de conclusão:** eventos principais disparam notificações; in-app funcionando; stubs prontos para substituir por push real na Fase 2.
+### Verificação Real de Email (adiada da Etapa 1)
+- [ ] Implementar envio real de email com código de verificação (usando o `Notificador`)
+- [ ] Recriar `POST /auth/verificar-email` com código enviado por email (não retornado na resposta)
+- [ ] Adicionar `CodigoVerificacao` e `CodigoVerificacaoExpira` na struct `Usuario`
+- [ ] Opcionalmente ativar bloqueio de login para emails não verificados (decisão a tomar na etapa)
+- [ ] Integrar envio real de email na recuperação de senha (substituir o retorno do token na resposta)
+
+**Critério de conclusão:** eventos principais disparam notificações; in-app funcionando; verificação de email funcional com envio real; stubs prontos para substituir por push real na Fase 2.
 
 ---
 
@@ -398,4 +450,4 @@ Vantagens: sem Docker obrigatório para desenvolver, testes unitários triviais,
 
 ---
 
-*Plano atualizado em abril/2026. Seguir a ordem das etapas — cada uma constrói sobre a anterior.*
+*Plano atualizado em 11/abril/2026. Seguir a ordem das etapas — cada uma constrói sobre a anterior.*

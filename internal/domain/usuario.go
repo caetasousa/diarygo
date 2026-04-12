@@ -20,26 +20,28 @@ const (
 
 // Usuario representa a entidade de autenticacao — espelha a tabela `usuarios` do banco.
 type Usuario struct {
-	ID                uuid.UUID
-	Email             string
-	SenhaHash         string
-	Tipo              TipoUsuario
-	EmailVerificado   bool
-	Ativo             bool
-	CodigoVerificacao string // nao persiste no SQL; usado para verificacao de email no MVP
-	CriadoEm          time.Time
-	AtualizadoEm      time.Time
+	ID                     uuid.UUID
+	Email                  string
+	SenhaHash              string
+	Tipo                   TipoUsuario
+	EmailVerificado        bool
+	Ativo                  bool
+	TokenRecuperacao       string    // token UUID para recuperacao de senha
+	TokenRecuperacaoExpira time.Time // expiracao do token de recuperacao
+	CriadoEm               time.Time
+	AtualizadoEm           time.Time
 }
 
 // Erros de dominio (sentinela) — usados para mapear status HTTP nos handlers.
 var (
-	ErrEmailJaExiste             = errors.New("email ja cadastrado")
-	ErrCredenciaisInvalidas      = errors.New("credenciais invalidas")
-	ErrUsuarioNaoEncontrado      = errors.New("usuario nao encontrado")
-	ErrUsuarioInativo            = errors.New("usuario inativo")
-	ErrEmailNaoVerificado        = errors.New("email nao verificado")
-	ErrTokenInvalido             = errors.New("token invalido")
-	ErrCodigoVerificacaoInvalido = errors.New("codigo de verificacao invalido")
+	ErrEmailJaExiste            = errors.New("email ja cadastrado")
+	ErrCredenciaisInvalidas     = errors.New("credenciais invalidas")
+	ErrUsuarioNaoEncontrado     = errors.New("usuario nao encontrado")
+	ErrUsuarioInativo           = errors.New("usuario inativo")
+	ErrEmailNaoVerificado       = errors.New("email nao verificado")
+	ErrTokenInvalido            = errors.New("token invalido")
+	ErrTokenRecuperacaoInvalido = errors.New("token de recuperacao invalido")
+	ErrTokenRecuperacaoExpirado = errors.New("token de recuperacao expirado")
 )
 
 // ValidarEmail verifica o formato do email (RFC 5322).

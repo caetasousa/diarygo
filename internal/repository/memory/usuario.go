@@ -78,6 +78,21 @@ func (r *UsuarioRepository) BuscarPorID(ctx context.Context, id uuid.UUID) (*dom
 	return &copia, nil
 }
 
+// BuscarPorTokenRecuperacao retorna uma copia do usuario pelo token de recuperacao de senha.
+func (r *UsuarioRepository) BuscarPorTokenRecuperacao(ctx context.Context, token string) (*domain.Usuario, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, u := range r.usuarios {
+		if u.TokenRecuperacao != "" && u.TokenRecuperacao == token {
+			copia := *u
+			return &copia, nil
+		}
+	}
+
+	return nil, domain.ErrUsuarioNaoEncontrado
+}
+
 // Atualizar substitui o usuario existente. Retorna ErrUsuarioNaoEncontrado se nao existir.
 func (r *UsuarioRepository) Atualizar(ctx context.Context, u *domain.Usuario) error {
 	r.mu.Lock()

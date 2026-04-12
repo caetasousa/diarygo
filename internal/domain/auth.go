@@ -11,6 +11,7 @@ import (
 type UsuarioReader interface {
 	BuscarPorEmail(ctx context.Context, email string) (*Usuario, error)
 	BuscarPorID(ctx context.Context, id uuid.UUID) (*Usuario, error)
+	BuscarPorTokenRecuperacao(ctx context.Context, token string) (*Usuario, error)
 }
 
 // UsuarioWriter define operacoes de escrita do repositorio de usuarios.
@@ -37,12 +38,6 @@ type LoginRequest struct {
 	Senha string `json:"senha"`
 }
 
-// VerificarEmailRequest representa o payload para verificacao de email.
-type VerificarEmailRequest struct {
-	Email  string `json:"email"`
-	Codigo string `json:"codigo"`
-}
-
 // TokenResponse e a resposta retornada apos login bem-sucedido.
 type TokenResponse struct {
 	AccessToken string `json:"access_token"`
@@ -52,10 +47,26 @@ type TokenResponse struct {
 
 // RegistroResponse e a resposta retornada apos registro bem-sucedido.
 type RegistroResponse struct {
-	ID                uuid.UUID   `json:"id"`
-	Email             string      `json:"email"`
-	Tipo              TipoUsuario `json:"tipo"`
-	CodigoVerificacao string      `json:"codigo_verificacao,omitempty"` // apenas em ENV=development
+	ID    uuid.UUID   `json:"id"`
+	Email string      `json:"email"`
+	Tipo  TipoUsuario `json:"tipo"`
+}
+
+// SolicitarRecuperacaoRequest representa o payload para solicitar recuperacao de senha.
+type SolicitarRecuperacaoRequest struct {
+	Email string `json:"email"`
+}
+
+// SolicitarRecuperacaoResponse e a resposta (apenas em development — em prod nao retorna token).
+type SolicitarRecuperacaoResponse struct {
+	Mensagem string `json:"mensagem"`
+	Token    string `json:"token,omitempty"` // apenas em ENV=development
+}
+
+// RedefinirSenhaRequest representa o payload para redefinir a senha com token de recuperacao.
+type RedefinirSenhaRequest struct {
+	Token     string `json:"token"`
+	NovaSenha string `json:"nova_senha"`
 }
 
 // TokenPayload representa as claims customizadas do JWT.

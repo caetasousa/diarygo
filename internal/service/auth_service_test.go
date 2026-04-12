@@ -54,9 +54,6 @@ func TestRegistrar_EmailValido_CriaUsuario(t *testing.T) {
 	if resp.Tipo != domain.TipoCliente {
 		t.Errorf("tipo esperado CLIENTE, got %s", resp.Tipo)
 	}
-	if resp.CodigoVerificacao == "" {
-		t.Error("esperava codigo de verificacao em development")
-	}
 }
 
 func TestRegistrar_EmailDuplicado_RetornaErro(t *testing.T) {
@@ -315,52 +312,156 @@ func TestValidarToken_SecretErrado_RetornaErro(t *testing.T) {
 	}
 }
 
-// --- VerificarEmail ---
+// --- SolicitarRecuperacao ---
 
-func TestVerificarEmail_CodigoValido_MarcaVerificado(t *testing.T) {
+func TestSolicitarRecuperacao_EmailExistente_RetornaToken(t *testing.T) {
 	svc := novaService(t)
-	resp := registrarUsuario(t, svc, testEmail, domain.TipoCliente)
+	registrarUsuario(t, svc, testEmail, domain.TipoCliente)
 
-	err := svc.VerificarEmail(context.Background(), domain.VerificarEmailRequest{
-		Email:  testEmail,
-		Codigo: resp.CodigoVerificacao,
+	resp, err := svc.SolicitarRecuperacao(context.Background(), domain.SolicitarRecuperacaoRequest{
+		Email: testEmail,
 	})
 
 	if err != nil {
 		t.Fatalf("esperava nil, got: %v", err)
 	}
+	if resp.Token == "" {
+		t.Error("esperava token nao vazio em development")
+	}
+	if resp.Mensagem == "" {
+		t.Error("esperava mensagem nao vazia")
+	}
 }
 
-func TestVerificarEmail_CodigoInvalido_RetornaErro(t *testing.T) {
+func TestSolicitarRecuperacao_EmailInexistente_RetornaSucessoSemToken(t *testing.T) {
+	svc := novaService(t)
+
+	// OWASP A07: nao revelar que o email nao existe
+	resp, err := svc.SolicitarRecuperacao(context.Background(), domain.SolicitarRecuperacaoRequest{
+		Email: "naoexiste@diarygo.com.br",
+	})
+
+	if err != nil {
+		t.Fatalf("esperava nil, got: %v", err)
+	}
+	if resp.Mensagem == "" {
+		t.Error("esperava mensagem nao vazia")
+	}
+}
+
+// --- RedefinirSenha ---
+
+func TestRedefinirSenha_TokenValido_AtualizaSenha(t *testing.T) {
 	svc := novaService(t)
 	registrarUsuario(t, svc, testEmail, domain.TipoCliente)
 
-	err := svc.VerificarEmail(context.Background(), domain.VerificarEmailRequest{
-		Email:  testEmail,
-		Codigo: "codigo-errado",
+	recResp, _ := svc.SolicitarRecuperacao(context.Background(), domain.SolicitarRecuperacaoRequest{
+		Email: testEmail,
 	})
 
-	if err == nil {
-		t.Fatal("esperava erro")
+	err := svc.RedefinirSenha(context.Background(), domain.RedefinirSenhaRequest{
+		Token:     recResp.Token,
+		NovaSenha: "NovaSenha123",
+	})
+
+	if err != nil {
+		t.Fatalf("esperava nil, got: %v", err)
 	}
-	if !isErro(err, domain.ErrCodigoVerificacaoInvalido) {
-		t.Errorf("esperava ErrCodigoVerificacaoInvalido, got: %v", err)
+
+	// Login com nova senha deve funcionar
+	_, err = svc.Login(context.Background(), domain.LoginRequest{
+		Email: testEmail,
+		Senha: "NovaSenha123",
+	})
+	if err != nil {
+		t.Errorf("esperava login com nova senha, got: %v", err)
+	}
+
+	// Login com senha antiga deve falhar
+	_, err = svc.Login(context.Background(), domain.LoginRequest{
+		Email: testEmail,
+		Senha: testSenha,
+	})
+	if err == nil {
+		t.Error("esperava erro ao usar senha antiga")
 	}
 }
 
-func TestVerificarEmail_EmailInexistente_RetornaErro(t *testing.T) {
+func TestRedefinirSenha_TokenInvalido_RetornaErro(t *testing.T) {
 	svc := novaService(t)
 
-	err := svc.VerificarEmail(context.Background(), domain.VerificarEmailRequest{
-		Email:  "naoexiste@diarygo.com.br",
-		Codigo: "qualquer-codigo",
+	err := svc.RedefinirSenha(context.Background(), domain.RedefinirSenhaRequest{
+		Token:     "token-inexistente",
+		NovaSenha: "NovaSenha123",
 	})
 
 	if err == nil {
 		t.Fatal("esperava erro")
 	}
-	if !isErro(err, domain.ErrUsuarioNaoEncontrado) {
-		t.Errorf("esperava ErrUsuarioNaoEncontrado, got: %v", err)
+	if !isErro(err, domain.ErrTokenRecuperacaoInvalido) {
+		t.Errorf("esperava ErrTokenRecuperacaoInvalido, got: %v", err)
+	}
+}
+
+func TestRedefinirSenha_TokenVazio_RetornaErro(t *testing.T) {
+	svc := novaService(t)
+
+	err := svc.RedefinirSenha(context.Background(), domain.RedefinirSenhaRequest{
+		Token:     "",
+		NovaSenha: "NovaSenha123",
+	})
+
+	if err == nil {
+		t.Fatal("esperava erro")
+	}
+	if !isErro(err, domain.ErrTokenRecuperacaoInvalido) {
+		t.Errorf("esperava ErrTokenRecuperacaoInvalido, got: %v", err)
+	}
+}
+
+func TestRedefinirSenha_TokenExpirado_RetornaErro(t *testing.T) {
+	repo := memory.NewUsuarioRepository()
+	svc := service.NewAuthServiceComCost(repo, testSecret, 15*time.Minute, "development", service.BcryptCostTeste)
+
+	registrarUsuario(t, svc, testEmail, domain.TipoCliente)
+
+	recResp, _ := svc.SolicitarRecuperacao(context.Background(), domain.SolicitarRecuperacaoRequest{
+		Email: testEmail,
+	})
+
+	// Manipular o usuario para expirar o token
+	u, _ := repo.BuscarPorEmail(context.Background(), testEmail)
+	u.TokenRecuperacaoExpira = time.Now().Add(-1 * time.Hour)
+	repo.Atualizar(context.Background(), u) //nolint:errcheck
+
+	err := svc.RedefinirSenha(context.Background(), domain.RedefinirSenhaRequest{
+		Token:     recResp.Token,
+		NovaSenha: "NovaSenha123",
+	})
+
+	if err == nil {
+		t.Fatal("esperava erro")
+	}
+	if !isErro(err, domain.ErrTokenRecuperacaoExpirado) {
+		t.Errorf("esperava ErrTokenRecuperacaoExpirado, got: %v", err)
+	}
+}
+
+func TestRedefinirSenha_SenhaFraca_RetornaErro(t *testing.T) {
+	svc := novaService(t)
+	registrarUsuario(t, svc, testEmail, domain.TipoCliente)
+
+	recResp, _ := svc.SolicitarRecuperacao(context.Background(), domain.SolicitarRecuperacaoRequest{
+		Email: testEmail,
+	})
+
+	err := svc.RedefinirSenha(context.Background(), domain.RedefinirSenhaRequest{
+		Token:     recResp.Token,
+		NovaSenha: "curta",
+	})
+
+	if err == nil {
+		t.Fatal("esperava erro de senha fraca")
 	}
 }
 

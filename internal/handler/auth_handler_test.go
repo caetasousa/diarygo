@@ -83,9 +83,6 @@ func TestRegistroCliente_Sucesso_Retorna201(t *testing.T) {
 	if resp.Email != testEmail {
 		t.Errorf("email esperado %s, got %s", testEmail, resp.Email)
 	}
-	if resp.CodigoVerificacao == "" {
-		t.Error("esperava codigo de verificacao em development")
-	}
 }
 
 func TestRegistroCliente_EmailDuplicado_Retorna409(t *testing.T) {
@@ -178,27 +175,78 @@ func TestLogin_CredenciaisInvalidas_Retorna401(t *testing.T) {
 	}
 }
 
-// --- VerificarEmail ---
+// --- Recuperacao de Senha ---
 
-func TestVerificarEmail_Sucesso_Retorna200(t *testing.T) {
+func TestSolicitarRecuperacaoSenha_Sucesso_Retorna200(t *testing.T) {
 	r, _ := novoRouter(t)
-
-	// Registrar
-	var regResp domain.RegistroResponse
-	wReg := doRequest(r, http.MethodPost, "/api/v1/auth/registro/cliente", map[string]string{
+	doRequest(r, http.MethodPost, "/api/v1/auth/registro/cliente", map[string]string{
 		"email": testEmail,
 		"senha": testSenha,
 	}, "")
-	json.NewDecoder(wReg.Body).Decode(&regResp) //nolint:errcheck
 
-	// Verificar
-	w := doRequest(r, http.MethodPost, "/api/v1/auth/verificar-email", map[string]string{
-		"email":  testEmail,
-		"codigo": regResp.CodigoVerificacao,
+	w := doRequest(r, http.MethodPost, "/api/v1/auth/solicitar-recuperacao-senha", map[string]string{
+		"email": testEmail,
 	}, "")
 
 	if w.Code != http.StatusOK {
 		t.Errorf("esperava 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var resp domain.SolicitarRecuperacaoResponse
+	json.NewDecoder(w.Body).Decode(&resp) //nolint:errcheck
+	if resp.Token == "" {
+		t.Error("esperava token nao vazio em development")
+	}
+}
+
+func TestSolicitarRecuperacaoSenha_EmailInexistente_Retorna200(t *testing.T) {
+	r, _ := novoRouter(t)
+
+	// OWASP A07: nao revelar que o email nao existe
+	w := doRequest(r, http.MethodPost, "/api/v1/auth/solicitar-recuperacao-senha", map[string]string{
+		"email": "naoexiste@diarygo.com.br",
+	}, "")
+
+	if w.Code != http.StatusOK {
+		t.Errorf("esperava 200, got %d", w.Code)
+	}
+}
+
+func TestRedefinirSenha_Sucesso_Retorna200(t *testing.T) {
+	r, _ := novoRouter(t)
+	doRequest(r, http.MethodPost, "/api/v1/auth/registro/cliente", map[string]string{
+		"email": testEmail,
+		"senha": testSenha,
+	}, "")
+
+	// Solicitar token
+	wRec := doRequest(r, http.MethodPost, "/api/v1/auth/solicitar-recuperacao-senha", map[string]string{
+		"email": testEmail,
+	}, "")
+	var recResp domain.SolicitarRecuperacaoResponse
+	json.NewDecoder(wRec.Body).Decode(&recResp) //nolint:errcheck
+
+	// Redefinir
+	w := doRequest(r, http.MethodPost, "/api/v1/auth/redefinir-senha", map[string]string{
+		"token":      recResp.Token,
+		"nova_senha": "NovaSenha123",
+	}, "")
+
+	if w.Code != http.StatusOK {
+		t.Errorf("esperava 200, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestRedefinirSenha_TokenInvalido_Retorna401(t *testing.T) {
+	r, _ := novoRouter(t)
+
+	w := doRequest(r, http.MethodPost, "/api/v1/auth/redefinir-senha", map[string]string{
+		"token":      "token-invalido",
+		"nova_senha": "NovaSenha123",
+	}, "")
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("esperava 401, got %d", w.Code)
 	}
 }
 

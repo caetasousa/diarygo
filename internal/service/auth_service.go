@@ -92,13 +92,12 @@ func (s *AuthService) Registrar(ctx context.Context, req domain.RegistroRequest,
 	}
 
 	u := &domain.Usuario{
-		ID:                uuid.New(),
-		Email:             req.Email,
-		SenhaHash:         string(hash),
-		Tipo:              tipo,
-		EmailVerificado:   false,
-		Ativo:             true,
-		CodigoVerificacao: uuid.New().String(),
+		ID:              uuid.New(),
+		Email:           req.Email,
+		SenhaHash:       string(hash),
+		Tipo:            tipo,
+		EmailVerificado: false,
+		Ativo:           true,
 	}
 
 	if err := s.repo.Criar(ctx, u); err != nil {
@@ -114,11 +113,6 @@ func (s *AuthService) Registrar(ctx context.Context, req domain.RegistroRequest,
 		ID:    u.ID,
 		Email: u.Email,
 		Tipo:  u.Tipo,
-	}
-
-	// Retornar codigo de verificacao apenas em development (sem infra de email no MVP)
-	if s.env != "production" {
-		resp.CodigoVerificacao = u.CodigoVerificacao
 	}
 
 	return resp, nil
@@ -156,27 +150,76 @@ func (s *AuthService) Login(ctx context.Context, req domain.LoginRequest) (*doma
 	return token, nil
 }
 
-// VerificarEmail valida o codigo e marca o email como verificado.
-func (s *AuthService) VerificarEmail(ctx context.Context, req domain.VerificarEmailRequest) error {
+// SolicitarRecuperacao gera um token de recuperacao de senha.
+// OWASP A07: retorna sucesso mesmo se o email nao existe (nao revelar cadastro).
+// Em development, retorna o token na resposta. Em producao, apenas loga (futuro: enviar por email).
+func (s *AuthService) SolicitarRecuperacao(ctx context.Context, req domain.SolicitarRecuperacaoRequest) (*domain.SolicitarRecuperacaoResponse, error) {
 	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
+
+	resp := &domain.SolicitarRecuperacaoResponse{
+		Mensagem: "se o email estiver cadastrado, voce recebera instrucoes de recuperacao",
+	}
 
 	u, err := s.repo.BuscarPorEmail(ctx, req.Email)
 	if err != nil {
-		return domain.ErrUsuarioNaoEncontrado
+		// Nao revelar que o email nao existe — retornar sucesso
+		slog.Warn("recuperacao solicitada para email inexistente", "email", req.Email)
+		return resp, nil
 	}
 
-	if u.CodigoVerificacao == "" || u.CodigoVerificacao != req.Codigo {
-		return domain.ErrCodigoVerificacaoInvalido
-	}
-
-	u.EmailVerificado = true
-	u.CodigoVerificacao = "" // limpar apos uso
+	token := uuid.New().String()
+	u.TokenRecuperacao = token
+	u.TokenRecuperacaoExpira = time.Now().Add(1 * time.Hour)
 
 	if err := s.repo.Atualizar(ctx, u); err != nil {
-		return fmt.Errorf("erro ao atualizar usuario: %w", err)
+		return nil, fmt.Errorf("erro ao salvar token de recuperacao: %w", err)
 	}
 
-	slog.Info("email verificado com sucesso", "usuario_id", u.ID)
+	slog.Info("token de recuperacao gerado", "usuario_id", u.ID)
+
+	if s.env != "production" {
+		resp.Token = token
+	}
+
+	return resp, nil
+}
+
+// RedefinirSenha valida o token de recuperacao e atualiza a senha.
+func (s *AuthService) RedefinirSenha(ctx context.Context, req domain.RedefinirSenhaRequest) error {
+	if err := domain.ValidarSenha(req.NovaSenha); err != nil {
+		return err
+	}
+
+	if req.Token == "" {
+		return domain.ErrTokenRecuperacaoInvalido
+	}
+
+	u, err := s.repo.BuscarPorTokenRecuperacao(ctx, req.Token)
+	if err != nil {
+		return domain.ErrTokenRecuperacaoInvalido
+	}
+
+	if time.Now().After(u.TokenRecuperacaoExpira) {
+		// Limpar token expirado
+		u.TokenRecuperacao = ""
+		s.repo.Atualizar(ctx, u) //nolint:errcheck
+		return domain.ErrTokenRecuperacaoExpirado
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.NovaSenha), s.bcryptCost)
+	if err != nil {
+		return fmt.Errorf("erro ao processar nova senha: %w", err)
+	}
+
+	u.SenhaHash = string(hash)
+	u.TokenRecuperacao = ""
+	u.TokenRecuperacaoExpira = time.Time{}
+
+	if err := s.repo.Atualizar(ctx, u); err != nil {
+		return fmt.Errorf("erro ao atualizar senha: %w", err)
+	}
+
+	slog.Info("senha redefinida com sucesso", "usuario_id", u.ID)
 	return nil
 }
 

@@ -26,7 +26,8 @@ func (h *AuthHandler) Routes() chi.Router {
 	r.Post("/registro/cliente", h.RegistrarCliente)
 	r.Post("/registro/profissional", h.RegistrarProfissional)
 	r.Post("/login", h.Login)
-	r.Post("/verificar-email", h.VerificarEmail)
+	r.Post("/solicitar-recuperacao-senha", h.SolicitarRecuperacaoSenha)
+	r.Post("/redefinir-senha", h.RedefinirSenha)
 	return r
 }
 
@@ -132,40 +133,71 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	RespostaJSON(w, http.StatusOK, resp)
 }
 
-// VerificarEmail ativa o email do usuario com o codigo recebido.
+// SolicitarRecuperacaoSenha gera um token de recuperacao de senha.
 //
-// @Summary      Verificar email
-// @Description  Ativa o email do usuario usando o codigo enviado no registro (em development: retornado na resposta de registro).
+// @Summary      Solicitar recuperacao de senha
+// @Description  Gera um token de recuperacao. Em development, retorna o token na resposta. OWASP A07: retorna sucesso mesmo se o email nao existir.
 // @Tags         auth
 // @Accept       json
 // @Produce      json
-// @Param        body  body      domain.VerificarEmailRequest  true  "Email e codigo de verificacao"
-// @Success      200   {object}  map[string]string
+// @Param        body  body      domain.SolicitarRecuperacaoRequest  true  "Email"
+// @Success      200   {object}  domain.SolicitarRecuperacaoResponse
 // @Failure      400   {object}  ErroResponse
-// @Failure      404   {object}  ErroResponse
-// @Router       /auth/verificar-email [post]
-func (h *AuthHandler) VerificarEmail(w http.ResponseWriter, r *http.Request) {
+// @Router       /auth/solicitar-recuperacao-senha [post]
+func (h *AuthHandler) SolicitarRecuperacaoSenha(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 
-	var req domain.VerificarEmailRequest
+	var req domain.SolicitarRecuperacaoRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		RespostaErro(w, http.StatusBadRequest, "body invalido")
 		return
 	}
 
-	if err := h.svc.VerificarEmail(r.Context(), req); err != nil {
+	resp, err := h.svc.SolicitarRecuperacao(r.Context(), req)
+	if err != nil {
+		RespostaErro(w, http.StatusInternalServerError, "erro interno")
+		return
+	}
+
+	RespostaJSON(w, http.StatusOK, resp)
+}
+
+// RedefinirSenha redefine a senha usando o token de recuperacao.
+//
+// @Summary      Redefinir senha
+// @Description  Valida o token de recuperacao e atualiza a senha do usuario.
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body      domain.RedefinirSenhaRequest  true  "Token e nova senha"
+// @Success      200   {object}  map[string]string
+// @Failure      400   {object}  ErroResponse
+// @Failure      401   {object}  ErroResponse
+// @Router       /auth/redefinir-senha [post]
+func (h *AuthHandler) RedefinirSenha(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+
+	var req domain.RedefinirSenhaRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespostaErro(w, http.StatusBadRequest, "body invalido")
+		return
+	}
+
+	if err := h.svc.RedefinirSenha(r.Context(), req); err != nil {
 		switch {
-		case errors.Is(err, domain.ErrUsuarioNaoEncontrado):
-			RespostaErro(w, http.StatusNotFound, "usuario nao encontrado")
-		case errors.Is(err, domain.ErrCodigoVerificacaoInvalido):
-			RespostaErro(w, http.StatusBadRequest, "codigo de verificacao invalido")
+		case errors.Is(err, domain.ErrTokenRecuperacaoInvalido):
+			RespostaErro(w, http.StatusUnauthorized, "token de recuperacao invalido")
+		case errors.Is(err, domain.ErrTokenRecuperacaoExpirado):
+			RespostaErro(w, http.StatusUnauthorized, "token de recuperacao expirado")
+		case isValidacaoErro(err):
+			RespostaErro(w, http.StatusBadRequest, err.Error())
 		default:
 			RespostaErro(w, http.StatusInternalServerError, "erro interno")
 		}
 		return
 	}
 
-	RespostaJSON(w, http.StatusOK, map[string]string{"mensagem": "email verificado com sucesso"})
+	RespostaJSON(w, http.StatusOK, map[string]string{"mensagem": "senha redefinida com sucesso"})
 }
 
 // isValidacaoErro verifica se o erro e de validacao de dominio (nao e um sentinel conhecido).
@@ -177,7 +209,8 @@ func isValidacaoErro(err error) bool {
 		domain.ErrUsuarioInativo,
 		domain.ErrEmailNaoVerificado,
 		domain.ErrTokenInvalido,
-		domain.ErrCodigoVerificacaoInvalido,
+		domain.ErrTokenRecuperacaoInvalido,
+		domain.ErrTokenRecuperacaoExpirado,
 	}
 	for _, s := range sentinels {
 		if errors.Is(err, s) {
