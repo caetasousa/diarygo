@@ -150,32 +150,30 @@ npm run preview                           # preview do build
 
 ## Rodar o Projeto Apos Alteracoes
 
-**REGRA OBRIGATORIA:** Sempre que terminar uma alteracao (backend ou frontend), rodar o projeto e exibir os links de acesso com todas as rotas disponíveis para facilitar testes manuais. Formato obrigatorio de saida:
+**REGRA OBRIGATORIA:** Sempre que terminar uma alteracao (backend ou frontend), rodar o projeto e exibir os links de acesso com todas as rotas disponíveis para facilitar testes manuais. Os links devem ser renderizados como markdown clicavel (formato `[texto](url)`) para que o usuario possa clicar diretamente no terminal/IDE e abrir no navegador. Formato obrigatorio de saida:
 
-```
-Backend rodando em: http://localhost:8080
-Swagger UI:         http://localhost:8080/swagger/index.html
+**Backend rodando em:** [http://localhost:8080](http://localhost:8080)
+**Swagger UI:** [http://localhost:8080/swagger/index.html](http://localhost:8080/swagger/index.html)
 
-API — Rotas disponiveis:
-  GET  http://localhost:8080/health
-  POST http://localhost:8080/api/v1/auth/registro/cliente
-  POST http://localhost:8080/api/v1/auth/registro/profissional
-  POST http://localhost:8080/api/v1/auth/login
-  POST http://localhost:8080/api/v1/auth/solicitar-recuperacao-senha
-  POST http://localhost:8080/api/v1/auth/redefinir-senha
-  GET  http://localhost:8080/api/v1/me  (requer Bearer token)
+**API — Rotas disponiveis:**
+- `GET`  [http://localhost:8080/health](http://localhost:8080/health)
+- `POST` http://localhost:8080/api/v1/auth/registro/cliente
+- `POST` http://localhost:8080/api/v1/auth/registro/profissional
+- `POST` http://localhost:8080/api/v1/auth/login
+- `POST` http://localhost:8080/api/v1/auth/solicitar-recuperacao-senha
+- `POST` http://localhost:8080/api/v1/auth/redefinir-senha
+- `GET`  http://localhost:8080/api/v1/me _(requer Bearer token)_
 
-Frontend rodando em: http://localhost:5173
+**Frontend rodando em:** [http://localhost:5173](http://localhost:5173)
 
-Frontend — Paginas disponiveis:
-  http://localhost:5173/                         Home
-  http://localhost:5173/login                    Login
-  http://localhost:5173/registro                 Registro de cliente
-  http://localhost:5173/registro/profissional    Registro de diarista
-  http://localhost:5173/dashboard                Dashboard (requer login)
-  http://localhost:5173/recuperar-senha          Recuperar senha
-  http://localhost:5173/redefinir-senha          Redefinir senha
-```
+**Frontend — Paginas disponiveis:**
+- [http://localhost:5173/](http://localhost:5173/) — Home
+- [http://localhost:5173/login](http://localhost:5173/login) — Login
+- [http://localhost:5173/registro](http://localhost:5173/registro) — Registro de cliente
+- [http://localhost:5173/registro/profissional](http://localhost:5173/registro/profissional) — Registro de diarista
+- [http://localhost:5173/dashboard](http://localhost:5173/dashboard) — Dashboard _(requer login)_
+- [http://localhost:5173/recuperar-senha](http://localhost:5173/recuperar-senha) — Recuperar senha
+- [http://localhost:5173/redefinir-senha](http://localhost:5173/redefinir-senha) — Redefinir senha
 
 Listar TODAS as rotas — incluindo novas rotas adicionadas na alteracao em destaque.
 

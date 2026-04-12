@@ -1,0 +1,252 @@
+basePath: /api/v1
+definitions:
+  domain.LoginRequest:
+    properties:
+      email:
+        type: string
+      senha:
+        type: string
+    type: object
+  domain.RedefinirSenhaRequest:
+    properties:
+      nova_senha:
+        type: string
+      token:
+        type: string
+    type: object
+  domain.RegistroRequest:
+    properties:
+      email:
+        type: string
+      senha:
+        type: string
+    type: object
+  domain.RegistroResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      tipo:
+        $ref: '#/definitions/domain.TipoUsuario'
+    type: object
+  domain.SolicitarRecuperacaoRequest:
+    properties:
+      email:
+        type: string
+    type: object
+  domain.SolicitarRecuperacaoResponse:
+    properties:
+      mensagem:
+        type: string
+      token:
+        description: apenas em ENV=development
+        type: string
+    type: object
+  domain.TipoUsuario:
+    enum:
+    - CLIENTE
+    - PROFISSIONAL
+    - ADMIN
+    type: string
+    x-enum-varnames:
+    - TipoCliente
+    - TipoProfissional
+    - TipoAdmin
+  domain.TokenResponse:
+    properties:
+      access_token:
+        type: string
+      expires_in:
+        description: segundos
+        type: integer
+      token_type:
+        type: string
+    type: object
+  handler.ErroResponse:
+    properties:
+      erro:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: suporte@diarygo.com.br
+    name: DiaryGo Support
+  description: Plataforma intermediadora entre clientes e diaristas.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: DiaryGo API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Autentica com email e senha. Retorna access token JWT.
+      parameters:
+      - description: Credenciais
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.TokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErroResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErroResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErroResponse'
+      summary: Fazer login
+      tags:
+      - auth
+  /auth/redefinir-senha:
+    post:
+      consumes:
+      - application/json
+      description: Valida o token de recuperacao e atualiza a senha do usuario.
+      parameters:
+      - description: Token e nova senha
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.RedefinirSenhaRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErroResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErroResponse'
+      summary: Redefinir senha
+      tags:
+      - auth
+  /auth/registro/cliente:
+    post:
+      consumes:
+      - application/json
+      description: Cria um usuario com tipo CLIENTE. Retorna codigo de verificacao
+        em development.
+      parameters:
+      - description: Email e senha
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.RegistroRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.RegistroResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErroResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.ErroResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErroResponse'
+      summary: Registrar novo cliente
+      tags:
+      - auth
+  /auth/registro/profissional:
+    post:
+      consumes:
+      - application/json
+      description: Cria um usuario com tipo PROFISSIONAL com status PENDENTE (aguarda
+        aprovacao).
+      parameters:
+      - description: Email e senha
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.RegistroRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.RegistroResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErroResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.ErroResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErroResponse'
+      summary: Registrar nova profissional
+      tags:
+      - auth
+  /auth/solicitar-recuperacao-senha:
+    post:
+      consumes:
+      - application/json
+      description: 'Gera um token de recuperacao. Em development, retorna o token
+        na resposta. OWASP A07: retorna sucesso mesmo se o email nao existir.'
+      parameters:
+      - description: Email
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.SolicitarRecuperacaoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.SolicitarRecuperacaoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErroResponse'
+      summary: Solicitar recuperacao de senha
+      tags:
+      - auth
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

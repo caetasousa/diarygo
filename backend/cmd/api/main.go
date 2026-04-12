@@ -32,6 +32,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/httprate"
+	httpSwagger "github.com/swaggo/http-swagger"
+
+	_ "github.com/caetasousa/diarygo/docs/swagger"
 )
 
 func main() {
@@ -62,6 +65,13 @@ func main() {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.RequestID)
 	r.Use(securityHeaders)
+
+	// Swagger UI — apenas fora de producao
+	if cfg.Env != "production" {
+		r.Get("/swagger/*", httpSwagger.Handler(
+			httpSwagger.URL("/swagger/doc.json"),
+		))
+	}
 
 	// Health check
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
