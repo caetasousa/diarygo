@@ -72,7 +72,7 @@ test.describe('Registro de Profissional', () => {
 		await page.waitForURL('**/dashboard', { timeout: 8000 });
 
 		// Dashboard deve mostrar status PENDENTE
-		await expect(page.locator('.badge-orange')).toBeVisible();
+		await expect(page.locator('.badge-orange').first()).toBeVisible();
 		const dashContent = await page.content();
 		expect(dashContent).toMatch(/PENDENTE|análise|aprovação/i);
 	});
