@@ -316,33 +316,369 @@ Assistência residencial por assinatura, parcerias com condomínios, programa de
 
 ### Diagrama Entidade-Relacionamento
 
-```
-USUARIOS (base de autenticação)
-  ├── CLIENTES (1:1)
-  │     ├── ENDERECOS (1:N)
-  │     │     └── SOLICITACOES (N:1)
-  │     └── SOLICITACOES (1:N)
-  │           ├── SOLICITACAO_OPCIONAIS (N:N com OPCIONAIS)
-  │           ├── SERVICOS (1:1)
-  │           │     ├── HISTORICO_STATUS (1:N)
-  │           │     ├── AVALIACOES_CLIENTE (1:1)
-  │           │     ├── AVALIACOES_PROFISSIONAL (1:1)
-  │           │     └── TRANSACOES (1:1)
-  │           └── RECORRENCIAS (1:1)
-  │                 └── SERVICOS (1:N)
-  ├── PROFISSIONAIS (1:1)
-  │     ├── DOCUMENTOS (1:N)
-  │     ├── REFERENCIAS (1:N)
-  │     ├── REGIOES_ATUACAO (N:N com REGIOES)
-  │     ├── CATEGORIAS_PROFISSIONAL (N:N com CATEGORIAS_SERVICO)
-  │     ├── DISPONIBILIDADES (1:N)
-  │     ├── DADOS_BANCARIOS (1:N)
-  │     └── SERVICOS (1:N)
-  └── ADMINS (1:1)
-        └── DOCUMENTOS.analisado_por (FK)
+```mermaid
+erDiagram
+    %% ===================== CORE =====================
+    USUARIOS {
+        UUID id PK
+        VARCHAR email UK
+        VARCHAR senha_hash
+        ENUM tipo "CLIENTE | PROFISSIONAL | ADMIN"
+        BOOLEAN email_verificado
+        BOOLEAN ativo
+        TIMESTAMPTZ criado_em
+        TIMESTAMPTZ atualizado_em
+    }
 
-CATEGORIAS_SERVICO → TABELA_PRECOS (N:N com REGIOES)
-OPCIONAIS → SOLICITACAO_OPCIONAIS
+    CLIENTES {
+        UUID id PK
+        UUID usuario_id FK, UK
+        VARCHAR nome
+        CHAR cpf UK
+        VARCHAR telefone
+        SMALLINT score "0-100, default 100"
+        TIMESTAMPTZ criado_em
+        TIMESTAMPTZ atualizado_em
+    }
+
+    PROFISSIONAIS {
+        UUID id PK
+        UUID usuario_id FK, UK
+        VARCHAR nome
+        CHAR cpf UK
+        VARCHAR rg
+        VARCHAR telefone
+        VARCHAR foto_url
+        ENUM status "PENDENTE | APROVADA | REPROVADA | SUSPENSA | DESCREDENCIADA"
+        NUMERIC nota_media "1.00-5.00"
+        INTEGER total_servicos
+        BOOLEAN mei
+        TIMESTAMPTZ criado_em
+        TIMESTAMPTZ atualizado_em
+    }
+
+    ADMINS {
+        UUID id PK
+        UUID usuario_id FK, UK
+        VARCHAR nome
+        JSONB permissoes
+        TIMESTAMPTZ criado_em
+        TIMESTAMPTZ atualizado_em
+    }
+
+    %% ===================== DOCUMENTOS E REFERENCIAS =====================
+    DOCUMENTOS {
+        UUID id PK
+        UUID profissional_id FK
+        ENUM tipo "RG_FRENTE | RG_VERSO | CPF | COMPROVANTE | FOTO | OUTRO"
+        VARCHAR url
+        ENUM status "PENDENTE | APROVADO | REPROVADO"
+        UUID analisado_por FK
+        TEXT observacao
+        TIMESTAMPTZ criado_em
+        TIMESTAMPTZ atualizado_em
+    }
+
+    REFERENCIAS {
+        UUID id PK
+        UUID profissional_id FK
+        VARCHAR nome_contato
+        VARCHAR telefone_contato
+        ENUM status "PENDENTE | CONFIRMADA | NAO_CONFIRMADA"
+        TIMESTAMPTZ criado_em
+        TIMESTAMPTZ atualizado_em
+    }
+
+    %% ===================== REGIOES E DISPONIBILIDADE =====================
+    REGIOES {
+        UUID id PK
+        VARCHAR nome
+        VARCHAR cidade
+        CHAR estado
+        CHAR cep_inicio
+        CHAR cep_fim
+        BOOLEAN ativa
+        TIMESTAMPTZ criado_em
+        TIMESTAMPTZ atualizado_em
+    }
+
+    REGIOES_ATUACAO {
+        UUID profissional_id PK, FK
+        UUID regiao_id PK, FK
+    }
+
+    DISPONIBILIDADES {
+        UUID id PK
+        UUID profissional_id FK
+        SMALLINT dia_semana "0=Dom 6=Sab"
+        TIME hora_inicio
+        TIME hora_fim
+        TIMESTAMPTZ criado_em
+    }
+
+    %% ===================== CATALOGO =====================
+    CATEGORIAS_SERVICO {
+        UUID id PK
+        VARCHAR nome UK
+        TEXT descricao
+        INTEGER duracao_minima_min
+        BOOLEAN ativa
+        TIMESTAMPTZ criado_em
+        TIMESTAMPTZ atualizado_em
+    }
+
+    CATEGORIAS_PROFISSIONAL {
+        UUID profissional_id PK, FK
+        UUID categoria_id PK, FK
+    }
+
+    OPCIONAIS {
+        UUID id PK
+        VARCHAR nome UK
+        TEXT descricao
+        NUMERIC valor_extra
+        INTEGER tempo_extra_min
+        BOOLEAN ativo
+        TIMESTAMPTZ criado_em
+        TIMESTAMPTZ atualizado_em
+    }
+
+    TABELA_PRECOS {
+        UUID id PK
+        UUID categoria_id FK
+        UUID regiao_id FK
+        NUMERIC preco_hora
+        NUMERIC acrescimo_fds
+        NUMERIC desconto_semanal
+        NUMERIC desconto_quinzenal
+        NUMERIC desconto_duas_semana
+        BOOLEAN ativa
+        TIMESTAMPTZ criado_em
+        TIMESTAMPTZ atualizado_em
+    }
+
+    %% ===================== ENDERECOS =====================
+    ENDERECOS {
+        UUID id PK
+        UUID cliente_id FK
+        VARCHAR logradouro
+        VARCHAR numero
+        VARCHAR complemento
+        VARCHAR bairro
+        VARCHAR cidade
+        CHAR estado
+        CHAR cep
+        NUMERIC lat
+        NUMERIC lon
+        BOOLEAN principal
+        SMALLINT num_quartos
+        SMALLINT num_banheiros
+        SMALLINT num_salas
+        SMALLINT num_cozinhas
+        NUMERIC area_m2
+        TIMESTAMPTZ criado_em
+        TIMESTAMPTZ atualizado_em
+    }
+
+    %% ===================== DADOS BANCARIOS =====================
+    DADOS_BANCARIOS {
+        UUID id PK
+        UUID profissional_id FK
+        VARCHAR banco
+        VARCHAR agencia
+        VARCHAR conta
+        VARCHAR tipo_conta
+        VARCHAR chave_pix
+        BOOLEAN principal
+        TIMESTAMPTZ criado_em
+        TIMESTAMPTZ atualizado_em
+    }
+
+    %% ===================== SOLICITACOES =====================
+    SOLICITACOES {
+        UUID id PK
+        UUID cliente_id FK
+        UUID endereco_id FK
+        UUID categoria_id FK
+        ENUM frequencia "UNICA | SEMANAL | DUAS_POR_SEMANA | QUINZENAL"
+        DATE data_servico
+        TIME hora_inicio
+        INTEGER duracao_estimada_min
+        NUMERIC valor_referencia
+        TEXT observacoes
+        ENUM status "AGUARDANDO | ATRIBUIDA | CONFIRMADA | EM_ANDAMENTO | CONCLUIDA | CANCELADA"
+        TIMESTAMPTZ criado_em
+        TIMESTAMPTZ atualizado_em
+    }
+
+    SOLICITACAO_OPCIONAIS {
+        UUID solicitacao_id PK, FK
+        UUID opcional_id PK, FK
+    }
+
+    %% ===================== RECORRENCIAS =====================
+    RECORRENCIAS {
+        UUID id PK
+        UUID solicitacao_origem_id FK
+        UUID cliente_id FK
+        ENUM frequencia "SEMANAL | DUAS_POR_SEMANA | QUINZENAL"
+        SMALLINT dia_semana_1
+        SMALLINT dia_semana_2
+        TIME hora_inicio
+        ENUM status "ATIVA | PAUSADA | CANCELADA"
+        DATE proxima_data
+        TIMESTAMPTZ criado_em
+        TIMESTAMPTZ atualizado_em
+    }
+
+    %% ===================== SERVICOS (execucao) =====================
+    SERVICOS {
+        UUID id PK
+        UUID solicitacao_id FK, UK
+        UUID profissional_id FK
+        UUID recorrencia_id FK
+        ENUM status "AGENDADO | EM_ANDAMENTO | CONCLUIDO | CANCELADO | NO_SHOW"
+        TIMESTAMPTZ checkin_em
+        NUMERIC checkin_lat
+        NUMERIC checkin_lon
+        TIMESTAMPTZ checkout_em
+        NUMERIC checkout_lat
+        NUMERIC checkout_lon
+        BOOLEAN confirmado_cliente
+        BOOLEAN confirmado_prof
+        TIMESTAMPTZ criado_em
+        TIMESTAMPTZ atualizado_em
+    }
+
+    HISTORICO_STATUS {
+        UUID id PK
+        UUID servico_id FK
+        ENUM status_anterior
+        ENUM status_novo
+        TEXT observacao
+        TIMESTAMPTZ criado_em
+    }
+
+    %% ===================== AVALIACOES =====================
+    AVALIACOES_CLIENTE {
+        UUID id PK
+        UUID servico_id FK, UK
+        UUID cliente_id FK
+        UUID profissional_id FK
+        SMALLINT nota "1-5"
+        TEXT comentario
+        SMALLINT pontualidade "1-5"
+        SMALLINT qualidade "1-5"
+        SMALLINT educacao "1-5"
+        TIMESTAMPTZ criado_em
+    }
+
+    AVALIACOES_PROFISSIONAL {
+        UUID id PK
+        UUID servico_id FK, UK
+        UUID profissional_id FK
+        UUID cliente_id FK
+        SMALLINT nota "1-5"
+        SMALLINT ambiente "1-5"
+        SMALLINT materiais "1-5"
+        SMALLINT respeito "1-5"
+        TIMESTAMPTZ criado_em
+    }
+
+    %% ===================== FINANCEIRO =====================
+    TRANSACOES {
+        UUID id PK
+        UUID servico_id FK, UK
+        UUID cliente_id FK
+        UUID profissional_id FK
+        NUMERIC valor
+        ENUM metodo "DIRETO_EXTERNO | CARTAO | PIX | BOLETO"
+        ENUM status "REGISTRADA | PENDENTE | PAGA | ESTORNADA"
+        VARCHAR referencia_ext
+        TIMESTAMPTZ criado_em
+        TIMESTAMPTZ atualizado_em
+    }
+
+    %% ===================== NOTIFICACOES =====================
+    NOTIFICACOES {
+        UUID id PK
+        UUID usuario_id FK
+        ENUM canal "PUSH | EMAIL | SMS | IN_APP"
+        VARCHAR titulo
+        TEXT corpo
+        ENUM status "PENDENTE | ENVIADA | FALHOU | LIDA"
+        BOOLEAN lida
+        TIMESTAMPTZ criado_em
+        TIMESTAMPTZ atualizado_em
+    }
+
+    %% ===================== RELACIONAMENTOS =====================
+
+    %% Core: Usuario -> Perfis (1:1)
+    USUARIOS ||--o| CLIENTES : "e um"
+    USUARIOS ||--o| PROFISSIONAIS : "e um"
+    USUARIOS ||--o| ADMINS : "e um"
+
+    %% Cliente -> Enderecos (1:N)
+    CLIENTES ||--o{ ENDERECOS : "possui"
+
+    %% Profissional -> Documentos, Referencias, Dados Bancarios (1:N)
+    PROFISSIONAIS ||--o{ DOCUMENTOS : "envia"
+    PROFISSIONAIS ||--o{ REFERENCIAS : "fornece"
+    PROFISSIONAIS ||--o{ DADOS_BANCARIOS : "cadastra"
+    PROFISSIONAIS ||--o{ DISPONIBILIDADES : "define"
+
+    %% Admin analisa documentos
+    ADMINS ||--o{ DOCUMENTOS : "analisa"
+
+    %% N:N Profissional <-> Regioes (via tabela associativa)
+    PROFISSIONAIS ||--o{ REGIOES_ATUACAO : "atua em"
+    REGIOES ||--o{ REGIOES_ATUACAO : "atendida por"
+
+    %% N:N Profissional <-> Categorias (via tabela associativa)
+    PROFISSIONAIS ||--o{ CATEGORIAS_PROFISSIONAL : "oferece"
+    CATEGORIAS_SERVICO ||--o{ CATEGORIAS_PROFISSIONAL : "exercida por"
+
+    %% Catalogo: Tabela de Precos = Categoria x Regiao
+    CATEGORIAS_SERVICO ||--o{ TABELA_PRECOS : "precificada em"
+    REGIOES ||--o{ TABELA_PRECOS : "tem preco para"
+
+    %% Solicitacao
+    CLIENTES ||--o{ SOLICITACOES : "solicita"
+    ENDERECOS ||--o{ SOLICITACOES : "local de"
+    CATEGORIAS_SERVICO ||--o{ SOLICITACOES : "tipo de"
+
+    %% N:N Solicitacao <-> Opcionais
+    SOLICITACOES ||--o{ SOLICITACAO_OPCIONAIS : "inclui"
+    OPCIONAIS ||--o{ SOLICITACAO_OPCIONAIS : "adicionado em"
+
+    %% Recorrencia
+    SOLICITACOES ||--o| RECORRENCIAS : "origina"
+    CLIENTES ||--o{ RECORRENCIAS : "mantem"
+
+    %% Servico (execucao)
+    SOLICITACOES ||--o| SERVICOS : "gera"
+    PROFISSIONAIS ||--o{ SERVICOS : "executa"
+    RECORRENCIAS ||--o{ SERVICOS : "agenda"
+
+    %% Historico de status do servico
+    SERVICOS ||--o{ HISTORICO_STATUS : "registra"
+
+    %% Avaliacoes (1:1 por servico)
+    SERVICOS ||--o| AVALIACOES_CLIENTE : "avaliado por cliente"
+    SERVICOS ||--o| AVALIACOES_PROFISSIONAL : "avaliado por profissional"
+    CLIENTES ||--o{ AVALIACOES_CLIENTE : "avalia"
+    PROFISSIONAIS ||--o{ AVALIACOES_CLIENTE : "recebe avaliacao"
+    PROFISSIONAIS ||--o{ AVALIACOES_PROFISSIONAL : "avalia"
+    CLIENTES ||--o{ AVALIACOES_PROFISSIONAL : "recebe avaliacao"
+
+    %% Transacoes (1:1 por servico)
+    SERVICOS ||--o| TRANSACOES : "gera"
+    CLIENTES ||--o{ TRANSACOES : "paga"
+    PROFISSIONAIS ||--o{ TRANSACOES : "recebe"
+
+    %% Notificacoes
+    USUARIOS ||--o{ NOTIFICACOES : "recebe"
 ```
 
 ### Tabelas — Descrição Resumida
@@ -435,4 +771,4 @@ docker-compose up -d        # subir infraestrutura
 
 ---
 
-*Documento atualizado em abril/2026. Modelo intermediado, MVP sem pagamento online, arquitetura preparada para evolução gradual.*
+*Documento atualizado em 12/abril/2026. Modelo intermediado, MVP sem pagamento online, arquitetura preparada para evolução gradual.*
