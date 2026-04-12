@@ -60,6 +60,7 @@
 						class="input"
 						placeholder="Cole o token recebido"
 						bind:value={token}
+						on:input={() => { errors = { ...errors, token: undefined }; }}
 						disabled={loading}
 					/>
 					{#if errors.token}<span class="form-error">{errors.token}</span>{/if}
@@ -74,6 +75,7 @@
 					class="input"
 					placeholder="Mínimo 8 caracteres"
 					bind:value={novaSenha}
+					on:input={() => { errors = { ...errors, novaSenha: undefined }; }}
 					disabled={loading}
 					autocomplete="new-password"
 				/>
@@ -88,6 +90,7 @@
 					class="input"
 					placeholder="••••••••"
 					bind:value={confirmar}
+					on:input={() => { errors = { ...errors, confirmar: undefined }; }}
 					disabled={loading}
 					autocomplete="new-password"
 				/>
