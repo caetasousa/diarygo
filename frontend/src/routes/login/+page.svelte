@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { api } from '$lib/api/client';
 	import { auth, isAuthenticated } from '$lib/stores/auth';
 	import { toasts } from '$lib/stores/toasts';
@@ -31,7 +31,8 @@
 			const resp = await api.login({ email, senha });
 			auth.login(resp.access_token);
 			toasts.success('Login realizado com sucesso!');
-			goto('/dashboard');
+			// window.location garante navegação completa com Svelte 5 + SvelteKit 2
+			window.location.href = '/dashboard';
 		} catch (err) {
 			toasts.error(err instanceof Error ? err.message : 'Erro ao fazer login');
 		} finally {
@@ -63,6 +64,7 @@
 					class="input"
 					placeholder="seu@email.com"
 					bind:value={email}
+					on:input={() => { errors = { ...errors, email: undefined }; }}
 					disabled={loading}
 					autocomplete="email"
 				/>
@@ -84,6 +86,7 @@
 					class="input"
 					placeholder="••••••••"
 					bind:value={senha}
+					on:input={() => { errors = { ...errors, senha: undefined }; }}
 					disabled={loading}
 					autocomplete="current-password"
 				/>

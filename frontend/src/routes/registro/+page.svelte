@@ -63,6 +63,7 @@
 					class="input"
 					placeholder="seu@email.com"
 					bind:value={email}
+					on:input={() => { errors = { ...errors, email: undefined }; }}
 					disabled={loading}
 					autocomplete="email"
 				/>
@@ -77,6 +78,7 @@
 					class="input"
 					placeholder="Mínimo 8 caracteres"
 					bind:value={senha}
+					on:input={() => { errors = { ...errors, senha: undefined }; }}
 					disabled={loading}
 					autocomplete="new-password"
 				/>
@@ -91,6 +93,7 @@
 					class="input"
 					placeholder="••••••••"
 					bind:value={confirmar}
+					on:input={() => { errors = { ...errors, confirmar: undefined }; }}
 					disabled={loading}
 					autocomplete="new-password"
 				/>

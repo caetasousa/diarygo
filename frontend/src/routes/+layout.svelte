@@ -2,12 +2,14 @@
 	import '../app.css';
 	import Navbar from '$lib/components/Navbar.svelte';
 	import ToastContainer from '$lib/components/ToastContainer.svelte';
+
+	let { children } = $props();
 </script>
 
 <Navbar />
 
 <main>
-	<slot />
+	{@render children()}
 </main>
 
 <ToastContainer />

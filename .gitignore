@@ -1,3 +1,11 @@
+# Frontend — arquivos gerados (nunca commitar)
+frontend/.svelte-kit/
+frontend/build/
+frontend/node_modules/
+frontend/package-lock.json
+frontend/playwright-report/
+frontend/test-results/
+
 # Binários
 bin/
 /api

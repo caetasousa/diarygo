@@ -72,8 +72,13 @@ func main() {
 
 	r.Route("/api/v1", func(r chi.Router) {
 		// Rotas de autenticacao — com rate limiting restrito (OWASP A06)
+		// Em produção: 10 req/min. Em dev/test: 200 req/min para não bloquear testes.
+		rateLimit := 10
+		if cfg.Env != "production" {
+			rateLimit = 200
+		}
 		r.Route("/auth", func(r chi.Router) {
-			r.Use(httprate.LimitByIP(10, time.Minute))
+			r.Use(httprate.LimitByIP(rateLimit, time.Minute))
 			r.Mount("/", authHandler.Routes())
 		})
 

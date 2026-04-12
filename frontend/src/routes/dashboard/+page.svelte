@@ -1,7 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
-	import { isAuthenticated, currentUser } from '$lib/stores/auth';
+	import { currentUser } from '$lib/stores/auth';
 
 	const adminActions = [
 		{ icon: '👔', title: 'Profissionais', desc: 'Aprovar e gerenciar cadastros', href: '/admin/profissionais' },
@@ -9,10 +7,6 @@
 		{ icon: '📋', title: 'Serviços', desc: 'Acompanhar todos os serviços', href: '/admin/servicos' },
 		{ icon: '💰', title: 'Tabela de preços', desc: 'Configurar preços por região', href: '/admin/precos' }
 	];
-
-	onMount(() => {
-		if (!$isAuthenticated) goto('/login');
-	});
 
 	const statsByTipo = {
 		CLIENTE: [
@@ -85,11 +79,11 @@
 
 		<!-- Content por tipo -->
 		{#if $currentUser?.tipo === 'CLIENTE'}
-			<ClienteDashboard />
+			{@render ClienteDashboard()}
 		{:else if $currentUser?.tipo === 'PROFISSIONAL'}
-			<ProfissionalDashboard />
+			{@render ProfissionalDashboard()}
 		{:else if $currentUser?.tipo === 'ADMIN'}
-			<AdminDashboard />
+			{@render AdminDashboard()}
 		{/if}
 	</div>
 </div>
