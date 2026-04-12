@@ -68,6 +68,16 @@ git checkout master && git push
 - `context.Context` como primeiro parametro em funcoes de I/O
 - Structs de dominio em `internal/domain/`, sem dependencia de frameworks
 
+## Postura de Qualidade — Sem Preguica
+
+**REGRA OBRIGATORIA:** Nunca deixar erros por corrigir. Sempre:
+- Rodar `go test ./...` apos qualquer mudanca de codigo e corrigir **todos** os erros antes de continuar
+- Rodar `go vet ./...` e `gofmt -w .` antes de cada commit
+- Nao ignorar avisos do compilador, erros de IDE ou falhas de teste
+- Se um teste falhar, investigar a causa raiz — nunca comentar ou deletar o teste
+- Se um `go vet` apontar problema, corrigir o codigo — nunca suprimir sem justificativa
+- Imports nao utilizados, variaveis declaradas e nao usadas, erros ignorados com `_` em I/O: **corrigir sempre**
+
 ## Seguranca (OWASP Top 10:2025)
 
 **REGRA OBRIGATORIA:** Toda nova etapa do PLANO.md DEVE aplicar a skill `/owasp-security` durante implementacao.

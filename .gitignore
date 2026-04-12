@@ -1,6 +1,6 @@
 # Binários
 bin/
-api
+/api
 *.exe
 *.dll
 *.so
