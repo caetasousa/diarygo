@@ -1,18 +1,17 @@
 <script lang="ts">
-	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { api } from '$lib/api/client';
 	import { toasts } from '$lib/stores/toasts';
 
-	let token = $page.url.searchParams.get('token') ?? '';
+	export let data: { token: string };
+
 	let novaSenha = '';
 	let confirmar = '';
 	let loading = false;
-	let errors: { token?: string; novaSenha?: string; confirmar?: string } = {};
+	let errors: { novaSenha?: string; confirmar?: string } = {};
 
 	function validate() {
 		errors = {};
-		if (!token) errors.token = 'Token obrigatório';
 		if (!novaSenha) errors.novaSenha = 'Nova senha obrigatória';
 		else if (novaSenha.length < 8) errors.novaSenha = 'Mínimo 8 caracteres';
 		if (novaSenha && confirmar !== novaSenha) errors.confirmar = 'Senhas não conferem';
@@ -25,7 +24,7 @@
 
 		loading = true;
 		try {
-			await api.redefinirSenha({ token, nova_senha: novaSenha });
+			await api.redefinirSenha({ token: data.token, nova_senha: novaSenha });
 			toasts.success('Senha redefinida com sucesso!');
 			goto('/login');
 		} catch (err) {
@@ -51,23 +50,6 @@
 		</div>
 
 		<form class="auth-form card" on:submit={handleSubmit} novalidate>
-			{#if !$page.url.searchParams.get('token')}
-				<div class="form-group">
-					<label for="token" class="label">Token de recuperação</label>
-					<input
-						id="token"
-						type="text"
-						class="input"
-						placeholder="Cole o token recebido"
-						bind:value={token}
-						on:input={() => { errors = { ...errors, token: undefined }; }}
-						disabled={loading}
-						maxlength="64"
-					/>
-					{#if errors.token}<span class="form-error">{errors.token}</span>{/if}
-				</div>
-			{/if}
-
 			<div class="form-group">
 				<label for="novaSenha" class="label">Nova senha</label>
 				<input
