@@ -88,6 +88,7 @@
 					on:input={() => { errors = { ...errors, email: undefined }; }}
 					disabled={loading}
 					autocomplete="email"
+					maxlength="254"
 				/>
 				{#if errors.email}<span class="form-error">{errors.email}</span>{/if}
 			</div>
@@ -103,6 +104,7 @@
 					on:input={() => { errors = { ...errors, senha: undefined }; }}
 					disabled={loading}
 					autocomplete="new-password"
+					maxlength="72"
 				/>
 				{#if errors.senha}<span class="form-error">{errors.senha}</span>{/if}
 			</div>
@@ -118,6 +120,7 @@
 					on:input={() => { errors = { ...errors, confirmar: undefined }; }}
 					disabled={loading}
 					autocomplete="new-password"
+					maxlength="72"
 				/>
 				{#if errors.confirmar}<span class="form-error">{errors.confirmar}</span>{/if}
 			</div>

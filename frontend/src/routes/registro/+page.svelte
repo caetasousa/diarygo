@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import { api } from '$lib/api/client';
 	import { toasts } from '$lib/stores/toasts';
 
@@ -28,7 +27,7 @@
 		try {
 			await api.registrarCliente({ email, senha });
 			toasts.success('Conta criada! Faça login para continuar.');
-			goto('/login');
+			window.location.href = '/login';
 		} catch (err) {
 			toasts.error(err instanceof Error ? err.message : 'Erro ao criar conta');
 		} finally {
@@ -66,6 +65,7 @@
 					on:input={() => { errors = { ...errors, email: undefined }; }}
 					disabled={loading}
 					autocomplete="email"
+					maxlength="254"
 				/>
 				{#if errors.email}<span class="form-error">{errors.email}</span>{/if}
 			</div>
@@ -81,6 +81,7 @@
 					on:input={() => { errors = { ...errors, senha: undefined }; }}
 					disabled={loading}
 					autocomplete="new-password"
+					maxlength="72"
 				/>
 				{#if errors.senha}<span class="form-error">{errors.senha}</span>{/if}
 			</div>
@@ -96,6 +97,7 @@
 					on:input={() => { errors = { ...errors, confirmar: undefined }; }}
 					disabled={loading}
 					autocomplete="new-password"
+					maxlength="72"
 				/>
 				{#if errors.confirmar}<span class="form-error">{errors.confirmar}</span>{/if}
 			</div>

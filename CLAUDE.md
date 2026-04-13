@@ -82,29 +82,29 @@ git checkout master && git push
 
 ## Seguranca (OWASP Top 10:2025)
 
-**REGRA OBRIGATORIA:** Toda nova etapa do PLANO.md DEVE aplicar a skill `/owasp-security` durante implementacao.
+**REGRA OBRIGATORIA:** Toda nova etapa do PLANO.md DEVE aplicar a skill `/owasp-security` durante implementacao. Isso vale tanto para o **backend (Go)** quanto para o **frontend (SvelteKit)**.
 
 Ao implementar autenticacao, endpoints HTTP, validacao de entrada, tratamento de erros ou revisao de seguranca, executar:
 ```bash
 /owasp-security
 ```
 
-A skill cobre todas as 10 categorias OWASP 2025 com exemplos em Go + chi + PostgreSQL:
+A skill cobre todas as 10 categorias OWASP 2025 com exemplos em Go + chi + PostgreSQL. Para o frontend, aplicar os mesmos principios adaptados:
 
-| Categoria | Foco |
-|-----------|------|
-| **A01** | Broken Access Control (ownership, SSRF, CSRF) |
-| **A02** | Security Misconfiguration (headers, config, Swagger) |
-| **A03** | Software Supply Chain Failures (govulncheck, go.sum) |
-| **A04** | Cryptographic Failures (bcrypt, JWT, TLS) |
-| **A05** | Injection (SQL parametrizado, XSS, command injection) |
-| **A06** | Insecure Design (rate limiting, threat modeling) |
-| **A07** | Authentication Failures (timing attacks, NIST 800-63b) |
-| **A08** | Data Integrity Failures (validacao, go.sum verify) |
-| **A09** | Logging & Alerting Failures (slog, eventos criticos) |
-| **A10** | Exceptional Conditions (fail closed, rollback, defer) |
+| Categoria | Backend (Go) | Frontend (SvelteKit) |
+|-----------|-------------|----------------------|
+| **A01** | Ownership checks, SSRF, CSRF | Guard de rotas, nao expor dados de outros usuarios |
+| **A02** | Security headers (chi middleware) | CSP no app.html, headers meta, `skipLibCheck` nao suprime erros reais |
+| **A03** | govulncheck, go.sum | npm audit, nao usar `--force` em audit fix sem avaliar |
+| **A04** | bcrypt cost >= 12, JWT HS256 | Token em localStorage (tradeoff SPA), nunca logar token no console |
+| **A05** | pgx parametrizado $1, $2... | Sem innerHTML dinamico, sem eval(), sem interpolacao direta no DOM |
+| **A06** | Rate limiting httprate | maxlength em todos inputs, validacao no cliente E no servidor |
+| **A07** | Timing attack bcrypt, NIST 800-63b | autocomplete correto, mensagens de erro genericas, nao revelar campo errado |
+| **A08** | Validacao entrada, go.sum verify | Types TypeScript espelham DTOs do backend, sem any silencioso |
+| **A09** | slog estruturado, nunca logar CPF/senha | Nunca console.log com token, email ou senha |
+| **A10** | fail closed, defer cleanup | Tratamento de erro em todo fetch, nao expor stack trace ao usuario |
 
-Checklist minimo por etapa:
+Checklist minimo por etapa — **backend**:
 - Autenticacao/Autorizacao implementada? → usar skill secoes A01, A07
 - Armazenar senhas? → bcrypt cost >= 12 (A04)
 - Query ao banco? → pgx parametrizado $1, $2... (A05)
@@ -112,6 +112,15 @@ Checklist minimo por etapa:
 - Erro possivel? → fail closed, defer cleanup (A10)
 - Logando dados? → nunca senhas/tokens/CPF (A09)
 - Dependencias adicionadas? → govulncheck na CI (A03)
+
+Checklist minimo por etapa — **frontend**:
+- Formulario novo? → maxlength em todos inputs, validacao client-side + server-side (A06)
+- Rota protegida? → +page.ts com guard `isAuthenticated` + redirect 302 (A01)
+- Dados do usuario exibidos? → escapar via Svelte (nao usar `@html` sem sanitizar) (A05)
+- Fetch novo? → try/catch obrigatorio, mensagem generica ao usuario, nao expor erro raw (A10)
+- Dependencias adicionadas? → `npm audit` e avaliar severidade (A03)
+- app.html atualizado? → CSP, X-Content-Type-Options, Referrer-Policy (A02)
+- Console.log? → nunca com token, senha ou dados pessoais (A09)
 
 ## Regras Criticas
 
@@ -176,6 +185,53 @@ npm run preview                           # preview do build
 - [http://localhost:5173/redefinir-senha](http://localhost:5173/redefinir-senha) — Redefinir senha
 
 Listar TODAS as rotas — incluindo novas rotas adicionadas na alteracao em destaque.
+
+## Revisao de Codigo — Codex + Engenheiro Senior
+
+**REGRA OBRIGATORIA:** Todo codigo novo ou alterado deve ser revisado sob dois angulos antes de ser considerado pronto:
+
+### 1. Revisao Codex (corretude e padroes)
+Simular a perspectiva de um revisor automatizado rigoroso. Verificar:
+- Codigo compila e todos os testes passam (`go test ./...` / `npm run check`)
+- Sem imports nao usados, variaveis mortas, erros ignorados com `_`
+- Convencoes de nomenclatura respeitadas (Go: camelCase/PascalCase; TS: camelCase)
+- Nenhuma logica duplicada que deveria ser abstraida
+- Tipos TypeScript corretos — sem `any` implicito ou cast forcado
+- Nenhum `console.log` ou `fmt.Println` de debug esquecido no codigo
+
+### 2. Revisao Senior — Backend (Go + chi + PostgreSQL)
+Simular a perspectiva de um engenheiro Go senior. Verificar:
+- Interfaces sao pequenas e focadas (1-3 metodos) — Go idiomatico
+- Injecao de dependencia via construtor, sem globals mutaveis
+- Erros tratados explicitamente — nunca `_` em operacoes de I/O
+- `context.Context` propagado corretamente em toda cadeia de chamadas
+- Handlers HTTP: MaxBytesReader, decode, validar, chamar service, mapear erro
+- Nenhuma logica de negocio nos handlers — pertence ao service
+- SQL (quando aplicavel): parametrizado, sem concatenacao de string
+- Seguranca: headers aplicados, rate limiting ativo, JWT validado com metodo fixo
+
+### 2. Revisao Senior — Frontend (SvelteKit + Svelte 5 + TypeScript)
+Simular a perspectiva de um engenheiro frontend senior. Verificar:
+- Svelte 5: snippets via `{#snippet}` + `{@render}`, layout via `{@render children()}`
+- Stores usados corretamente — sem subscribe manual sem unsubscribe
+- Formularios: `novalidate` + validacao JS, `autocomplete` correto, `maxlength` em todos inputs
+- Navegacao apos submit: `window.location.href` para troca de pagina completa
+- Guards de rota em `+page.ts` com `redirect(302, '/login')` — nao em `onMount`
+- Sem `@html` com dados do usuario sem sanitizacao
+- Erros de API: try/catch em todo fetch, mensagem amigavel ao usuario, nao expor stack trace
+- `npm run check` com 0 erros antes de qualquer commit
+
+### 2. Revisao Senior — Infra e DevOps
+Simular a perspectiva de um engenheiro de infraestrutura senior. Verificar:
+- `.gitignore` cobre todos artefatos gerados (`node_modules`, `.svelte-kit`, `build`, `bin/`, `dist/`)
+- Secrets nunca commitados — `.env`, `app.env`, chaves JWT fora do repositorio
+- Docker Compose (quando ativo): volumes nomeados, healthcheck definido, portas nao expostas desnecessariamente
+- Variaveis de ambiente validadas na inicializacao da aplicacao (`config.Carregar()`)
+- Ambientes separados: `development` vs `production` — rate limits, logs e Swagger diferenciados
+- Swagger exposto apenas em non-production
+- Frontend exposto em `0.0.0.0` apenas em dev — em producao usar reverse proxy (nginx/caddy)
+- Node.js e Go em versoes LTS documentadas (`nvm use 20`, `go 1.25`)
+- Comandos de build reproduziveis: `go build ./...` e `npm run build` sem erros
 
 ## Fase Atual: MVP
 

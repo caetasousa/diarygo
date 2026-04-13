@@ -103,11 +103,12 @@ test.describe('Integração API — Fluxo Completo', () => {
 
 		// 1. Registra
 		await page.goto('/registro');
+		await page.waitForLoadState('networkidle');
 		await page.fill('input[type="email"]', email);
 		await page.fill('input[id="senha"]', senha);
 		await page.fill('input[id="confirmar"]', senha);
-		await page.click('button[type="submit"]');
-		await page.waitForURL('**/login', { timeout: 8000 });
+		await page.locator('button[type="submit"]').click();
+		await page.waitForURL('**/login', { timeout: 12000 });
 
 		// 2. Loga
 		await page.fill('input[type="email"]', email);

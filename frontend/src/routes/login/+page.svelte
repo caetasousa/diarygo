@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { goto, invalidateAll } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	import { api } from '$lib/api/client';
 	import { auth, isAuthenticated } from '$lib/stores/auth';
 	import { toasts } from '$lib/stores/toasts';
@@ -67,6 +67,7 @@
 					on:input={() => { errors = { ...errors, email: undefined }; }}
 					disabled={loading}
 					autocomplete="email"
+					maxlength="254"
 				/>
 				{#if errors.email}
 					<span class="form-error">{errors.email}</span>
@@ -89,6 +90,7 @@
 					on:input={() => { errors = { ...errors, senha: undefined }; }}
 					disabled={loading}
 					autocomplete="current-password"
+					maxlength="72"
 				/>
 				{#if errors.senha}
 					<span class="form-error">{errors.senha}</span>

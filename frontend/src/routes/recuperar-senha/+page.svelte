@@ -81,6 +81,7 @@
 						bind:value={email}
 						disabled={loading}
 						autocomplete="email"
+						maxlength="254"
 					/>
 				</div>
 

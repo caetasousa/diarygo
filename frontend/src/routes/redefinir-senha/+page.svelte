@@ -62,6 +62,7 @@
 						bind:value={token}
 						on:input={() => { errors = { ...errors, token: undefined }; }}
 						disabled={loading}
+						maxlength="64"
 					/>
 					{#if errors.token}<span class="form-error">{errors.token}</span>{/if}
 				</div>
@@ -78,6 +79,7 @@
 					on:input={() => { errors = { ...errors, novaSenha: undefined }; }}
 					disabled={loading}
 					autocomplete="new-password"
+					maxlength="72"
 				/>
 				{#if errors.novaSenha}<span class="form-error">{errors.novaSenha}</span>{/if}
 			</div>
@@ -93,6 +95,7 @@
 					on:input={() => { errors = { ...errors, confirmar: undefined }; }}
 					disabled={loading}
 					autocomplete="new-password"
+					maxlength="72"
 				/>
 				{#if errors.confirmar}<span class="form-error">{errors.confirmar}</span>{/if}
 			</div>

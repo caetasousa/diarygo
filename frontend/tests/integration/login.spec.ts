@@ -92,10 +92,11 @@ test.describe('Login', () => {
 
 	test('campos vazios exibem erros de validação inline', async ({ page }) => {
 		await page.goto('/login');
-		await page.click('button[type="submit"]');
+		await page.waitForLoadState('networkidle');
+		await page.locator('button[type="submit"]').click();
 
 		const erros = page.locator('.form-error');
-		await expect(erros.first()).toBeVisible();
+		await expect(erros.first()).toBeVisible({ timeout: 5000 });
 		expect(page.url()).not.toContain('/dashboard');
 	});
 
