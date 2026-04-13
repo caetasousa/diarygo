@@ -5,6 +5,7 @@ frontend/node_modules/
 frontend/package-lock.json
 frontend/playwright-report/
 frontend/test-results/
+backend/test-results/
 
 # Binários
 bin/
@@ -44,6 +45,9 @@ pgadmin-data/
 # Cobertura de testes
 *.out
 coverage.html
+
+# Claude Code
+skills-lock.json
 
 # Logs
 *.log
