@@ -91,6 +91,24 @@
 <!-- Sub-componentes inline -->
 {#snippet ClienteDashboard()}
 	<div class="dash-section">
+		<!-- Ações rápidas do cliente -->
+		<div class="admin-grid" style="margin-bottom: var(--space-6);">
+			<a href="/dashboard/perfil" class="admin-action card row gap-4">
+				<span class="admin-action-icon">👤</span>
+				<div class="stack gap-1">
+					<h3 class="text-subheading">Meu Perfil</h3>
+					<p class="text-caption">Completar dados pessoais (CPF, telefone)</p>
+				</div>
+			</a>
+			<a href="/dashboard/enderecos" class="admin-action card row gap-4">
+				<span class="admin-action-icon">🏠</span>
+				<div class="stack gap-1">
+					<h3 class="text-subheading">Endereços</h3>
+					<p class="text-caption">Gerenciar endereços de atendimento</p>
+				</div>
+			</a>
+		</div>
+
 		<div class="section-title-row">
 			<h2 class="text-feature-title">Próximos serviços</h2>
 			<a href="/solicitacoes" class="btn btn-ghost btn-sm">Ver todos</a>
@@ -118,6 +136,45 @@
 					<span class="badge badge-orange">PENDENTE</span>
 				</div>
 			</div>
+		</div>
+
+		<!-- Ações rápidas da profissional -->
+		<div class="admin-grid">
+			<a href="/dashboard/perfil" class="admin-action card row gap-4">
+				<span class="admin-action-icon">👤</span>
+				<div class="stack gap-1">
+					<h3 class="text-subheading">Meu Perfil</h3>
+					<p class="text-caption">Completar dados pessoais e foto</p>
+				</div>
+			</a>
+			<a href="/dashboard/documentos" class="admin-action card row gap-4">
+				<span class="admin-action-icon">📄</span>
+				<div class="stack gap-1">
+					<h3 class="text-subheading">Documentos</h3>
+					<p class="text-caption">Enviar RG, CPF e comprovante</p>
+				</div>
+			</a>
+			<a href="/dashboard/referencias" class="admin-action card row gap-4">
+				<span class="admin-action-icon">🤝</span>
+				<div class="stack gap-1">
+					<h3 class="text-subheading">Referências</h3>
+					<p class="text-caption">Adicionar contatos de referência</p>
+				</div>
+			</a>
+			<a href="/dashboard/regioes" class="admin-action card row gap-4">
+				<span class="admin-action-icon">📍</span>
+				<div class="stack gap-1">
+					<h3 class="text-subheading">Regiões</h3>
+					<p class="text-caption">Definir áreas de atuação</p>
+				</div>
+			</a>
+			<a href="/dashboard/disponibilidade" class="admin-action card row gap-4">
+				<span class="admin-action-icon">🗓️</span>
+				<div class="stack gap-1">
+					<h3 class="text-subheading">Disponibilidade</h3>
+					<p class="text-caption">Configurar horários semanais</p>
+				</div>
+			</a>
 		</div>
 
 		<div class="section-title-row" style="margin-top: var(--space-8);">
