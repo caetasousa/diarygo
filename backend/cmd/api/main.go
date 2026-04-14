@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/caetasousa/diarygo/internal/config"
+	"github.com/caetasousa/diarygo/internal/domain"
 	"github.com/caetasousa/diarygo/internal/handler"
 	mw "github.com/caetasousa/diarygo/internal/middleware"
 	"github.com/caetasousa/diarygo/internal/repository/memory"
@@ -53,10 +54,33 @@ func main() {
 	}
 	slog.SetDefault(slog.New(logHandler))
 
-	// Injecao de dependencias
+	// Injecao de dependencias — repositories
 	usuarioRepo := memory.NewUsuarioRepository()
+	clienteRepo := memory.NewClienteRepository()
+	enderecoRepo := memory.NewEnderecoRepository()
+	profissionalRepo := memory.NewProfissionalRepository()
+	documentoRepo := memory.NewDocumentoRepository()
+	referenciaRepo := memory.NewReferenciaRepository()
+	regiaoRepo := memory.NewRegiaoRepository()
+	profRegiaoRepo := memory.NewProfissionalRegiaoRepository(regiaoRepo)
+	disponibilidadeRepo := memory.NewDisponibilidadeRepository()
+
+	// Services
 	authService := service.NewAuthService(usuarioRepo, cfg.JWTSecret, cfg.JWTExpiry, cfg.Env)
+	clienteService := service.NewClienteService(clienteRepo)
+	enderecoService := service.NewEnderecoService(enderecoRepo, clienteRepo)
+	profissionalService := service.NewProfissionalService(profissionalRepo)
+	credenciamentoService := service.NewCredenciamentoService(
+		profissionalRepo, documentoRepo, referenciaRepo,
+		regiaoRepo, profRegiaoRepo, disponibilidadeRepo,
+	)
+
+	// Handlers
 	authHandler := handler.NewAuthHandler(authService)
+	clienteHandler := handler.NewClienteHandler(clienteService)
+	enderecoHandler := handler.NewEnderecoHandler(enderecoService)
+	profissionalHandler := handler.NewProfissionalHandler(profissionalService, credenciamentoService)
+	regiaoHandler := handler.NewRegiaoHandler(credenciamentoService)
 
 	r := chi.NewRouter()
 
@@ -92,6 +116,9 @@ func main() {
 			r.Mount("/", authHandler.Routes())
 		})
 
+		// Rotas publicas
+		r.Mount("/regioes", regiaoHandler.Routes())
+
 		// Rotas protegidas — requerem JWT valido
 		r.Group(func(r chi.Router) {
 			r.Use(mw.Autenticar(authService))
@@ -104,6 +131,19 @@ func main() {
 					return
 				}
 				handler.RespostaJSON(w, http.StatusOK, payload)
+			})
+
+			// Rotas de cliente — apenas CLIENTE
+			r.Group(func(r chi.Router) {
+				r.Use(mw.RequererTipo(domain.TipoCliente))
+				r.Mount("/clientes", clienteHandler.Routes())
+				r.Mount("/clientes/me/enderecos", enderecoHandler.Routes())
+			})
+
+			// Rotas de profissional — apenas PROFISSIONAL
+			r.Group(func(r chi.Router) {
+				r.Use(mw.RequererTipo(domain.TipoProfissional))
+				r.Mount("/profissionais", profissionalHandler.Routes())
 			})
 		})
 	})
