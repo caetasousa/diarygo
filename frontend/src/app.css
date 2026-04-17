@@ -57,6 +57,9 @@
 	--bg-hover-white: rgba(255, 255, 255, 0.28);
 	--bg-card:        rgba(255, 255, 255, 0.03);
 
+	/* Aliases de compatibilidade */
+	--color-text-muted: #464a4d;
+
 	/* Border radius scale */
 	--radius-sharp:    4px;
 	--radius-subtle:   6px;
@@ -260,6 +263,22 @@ body {
 	font-size: 0.75rem;
 }
 
+.btn-full { width: 100%; }
+
+/* btn-secondary no tema Resend = transparente com frost border (igual btn-primary) */
+.btn-secondary {
+	background: transparent;
+	color: var(--color-text-primary);
+	border: 1px solid var(--border-frost);
+}
+.btn-secondary:hover { background: var(--bg-hover-white); }
+
+.btn:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+	pointer-events: none;
+}
+
 /* ============================================================
    Card Utilities
    ============================================================ */
@@ -314,6 +333,12 @@ body {
 	color: var(--color-red-10);
 }
 
+/* Aliases semânticos */
+.badge-success  { background: var(--color-green-3);  color: var(--color-green-10); }
+.badge-danger   { background: var(--color-red-5);    color: var(--color-red-10); }
+.badge-warning  { background: var(--color-orange-4); color: var(--color-orange-11); }
+.badge-info     { background: var(--color-blue-4);   color: var(--color-blue-10); }
+
 /* ============================================================
    Form Utilities
    ============================================================ */
@@ -349,7 +374,58 @@ body {
 	display: block;
 	font-size: 0.875rem;
 	font-weight: 500;
+	color: var(--color-text-secondary);
+	margin-bottom: var(--space-2);
+}
+
+/* Aliases usados nas páginas do dashboard */
+.form-input {
+	width: 100%;
+	padding: 10px 14px;
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid var(--border-frost);
+	border-radius: var(--radius-standard);
 	color: var(--color-text-primary);
+	font-family: var(--font-body);
+	font-size: 0.875rem;
+	line-height: 1.43;
+	outline: none;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-input::placeholder { color: var(--color-text-tertiary); }
+
+.form-input:focus {
+	border-color: rgba(214, 235, 253, 0.4);
+	box-shadow: 0 0 0 3px rgba(59, 158, 255, 0.1);
+}
+
+.form-input:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.form-input.input-error {
+	border-color: rgba(255, 32, 71, 0.5);
+	box-shadow: 0 0 0 3px rgba(255, 32, 71, 0.1);
+}
+
+select.form-input {
+	appearance: none;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23a1a4a5' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 12px center;
+	padding-right: 36px;
+}
+
+/* Também mapeado como .input para backward compat */
+.input.input-error {
+	border-color: rgba(255, 32, 71, 0.5);
+	box-shadow: 0 0 0 3px rgba(255, 32, 71, 0.1);
+}
+
+.form-label {
+	display: block;
+	font-size: 0.875rem;
+	font-weight: 500;
+	color: var(--color-text-secondary);
 	margin-bottom: var(--space-2);
 }
 
@@ -357,10 +433,11 @@ body {
 	display: flex;
 	flex-direction: column;
 	gap: var(--space-2);
+	margin-bottom: var(--space-5);
 }
 
 .form-error {
-	font-size: 0.75rem;
+	font-size: 0.8125rem;
 	color: var(--color-red-10);
 	margin-top: var(--space-1);
 }
