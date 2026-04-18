@@ -29,6 +29,7 @@ var (
 	ErrCPFInvalido          = errors.New("CPF invalido")
 	ErrNomeObrigatorio      = errors.New("nome e obrigatorio")
 	ErrTelefoneInvalido     = errors.New("telefone invalido")
+	ErrScoreInvalido        = errors.New("score deve estar entre 0 e 100")
 )
 
 // ClienteReader define operacoes de leitura do repositorio de clientes.
@@ -142,6 +143,15 @@ func ValidarNome(nome string) error {
 	}
 	if len(nome) > 100 {
 		return errors.New("nome deve ter no maximo 100 caracteres")
+	}
+	return nil
+}
+
+// ValidarScore garante o intervalo 0..100 espelhando o CHECK do banco.
+// Primeira linha de defesa: reprova entrada invalida antes do UPDATE.
+func ValidarScore(score int) error {
+	if score < 0 || score > 100 {
+		return ErrScoreInvalido
 	}
 	return nil
 }

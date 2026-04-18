@@ -35,13 +35,18 @@ func (s *ClienteService) Criar(ctx context.Context, usuarioID uuid.UUID, req dom
 		return nil, err
 	}
 
+	score := 100 // score inicial espelha DEFAULT do banco
+	if err := domain.ValidarScore(score); err != nil {
+		return nil, err
+	}
+
 	c := &domain.Cliente{
 		ID:        uuid.New(),
 		UsuarioID: usuarioID,
 		Nome:      strings.TrimSpace(req.Nome),
 		CPF:       cpf,
 		Telefone:  telefone,
-		Score:     100, // score inicial
+		Score:     score,
 	}
 
 	if err := s.repo.Criar(ctx, c); err != nil {

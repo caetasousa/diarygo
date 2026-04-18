@@ -44,6 +44,8 @@ var (
 	ErrProfissionalNaoAprovada    = errors.New("profissional nao esta aprovada")
 	ErrProfissionalSuspensa       = errors.New("profissional esta suspensa")
 	ErrProfissionalDescredenciada = errors.New("profissional esta descredenciada")
+	ErrNotaMediaInvalida          = errors.New("nota media deve estar entre 1.0 e 5.0")
+	ErrTotalServicosInvalido      = errors.New("total de servicos nao pode ser negativo")
 )
 
 // ProfissionalReader define operacoes de leitura.
@@ -72,6 +74,25 @@ type ProfissionalRequest struct {
 	Telefone string `json:"telefone"`
 	FotoURL  string `json:"foto_url"`
 	MEI      bool   `json:"mei"`
+}
+
+// ValidarNotaMedia garante 1.0..5.0 espelhando o CHECK do banco.
+// Primeira linha de defesa em updates pos-avaliacao (Etapa 6).
+// Nota: a entidade recem-criada tem NotaMedia=0 e nao deve passar por esta
+// validacao — so apos a primeira avaliacao registrada.
+func ValidarNotaMedia(nota float64) error {
+	if nota < 1.0 || nota > 5.0 {
+		return ErrNotaMediaInvalida
+	}
+	return nil
+}
+
+// ValidarTotalServicos garante >= 0 espelhando o CHECK do banco.
+func ValidarTotalServicos(total int) error {
+	if total < 0 {
+		return ErrTotalServicosInvalido
+	}
+	return nil
 }
 
 // ProfissionalResponse e a resposta com os dados da profissional.

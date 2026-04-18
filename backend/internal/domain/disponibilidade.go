@@ -26,6 +26,7 @@ var (
 	ErrHoraInicioInvalida           = errors.New("hora de inicio invalida: use formato HH:MM")
 	ErrHoraFimInvalida              = errors.New("hora de fim invalida: use formato HH:MM")
 	ErrHoraFimAntesDaInicio         = errors.New("hora de fim deve ser apos a hora de inicio")
+	ErrSlotDuplicado                = errors.New("slot de disponibilidade duplicado no payload")
 )
 
 // DisponibilidadeReader define operacoes de leitura.

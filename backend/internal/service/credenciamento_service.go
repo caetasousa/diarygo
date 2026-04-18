@@ -155,13 +155,29 @@ func (s *CredenciamentoService) ListarRegioes(ctx context.Context) ([]*domain.Re
 }
 
 // DefinirRegioes define as regioes de atuacao da profissional autenticada.
+// Deduplica IDs do payload antes de enviar ao repo — a PK composta
+// (profissional_id, regiao_id) ja impede duplicatas no banco, mas o service
+// responde com erro mais claro se o cliente enviar IDs repetidos.
 func (s *CredenciamentoService) DefinirRegioes(ctx context.Context, usuarioID uuid.UUID, req domain.DefinirRegioesRequest) ([]*domain.RegiaoResponse, error) {
 	prof, err := s.profissionalRepo.BuscarPorUsuarioID(ctx, usuarioID)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := s.profRegiaoRepo.DefinirRegioes(ctx, prof.ID, req.RegiaoIDs); err != nil {
+	visto := make(map[uuid.UUID]struct{}, len(req.RegiaoIDs))
+	ids := make([]uuid.UUID, 0, len(req.RegiaoIDs))
+	for _, id := range req.RegiaoIDs {
+		if id == uuid.Nil {
+			return nil, domain.ErrRegiaoIDInvalida
+		}
+		if _, ok := visto[id]; ok {
+			continue
+		}
+		visto[id] = struct{}{}
+		ids = append(ids, id)
+	}
+
+	if err := s.profRegiaoRepo.DefinirRegioes(ctx, prof.ID, ids); err != nil {
 		return nil, err
 	}
 
@@ -205,6 +221,14 @@ func (s *CredenciamentoService) DefinirDisponibilidades(ctx context.Context, usu
 		return nil, err
 	}
 
+	// Chave de deduplicacao espelha o UNIQUE uq_disponibilidades_prof_dia_inicio_fim.
+	// Detectar duplicata no payload aqui permite erro claro antes do SQL disparar.
+	type slotKey struct {
+		dia int
+		ini string
+		fim string
+	}
+	visto := make(map[slotKey]struct{}, len(req.Slots))
 	slots := make([]*domain.Disponibilidade, 0, len(req.Slots))
 	for _, s2 := range req.Slots {
 		if s2.DiaSemana < 0 || s2.DiaSemana > 6 {
@@ -219,6 +243,11 @@ func (s *CredenciamentoService) DefinirDisponibilidades(ctx context.Context, usu
 		if s2.HoraFim <= s2.HoraInicio {
 			return nil, domain.ErrHoraFimAntesDaInicio
 		}
+		k := slotKey{dia: s2.DiaSemana, ini: s2.HoraInicio, fim: s2.HoraFim}
+		if _, ok := visto[k]; ok {
+			return nil, domain.ErrSlotDuplicado
+		}
+		visto[k] = struct{}{}
 		slots = append(slots, &domain.Disponibilidade{
 			ID:         uuid.New(),
 			DiaSemana:  s2.DiaSemana,

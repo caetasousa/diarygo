@@ -41,6 +41,8 @@ var (
 	ErrCidadeObrigatoria            = errors.New("cidade e obrigatoria")
 	ErrEstadoInvalido               = errors.New("estado invalido: deve ser UF com 2 letras")
 	ErrComodoInvalido               = errors.New("numero de comodos deve ser maior que zero")
+	ErrComodoNegativo               = errors.New("numero de comodos nao pode ser negativo")
+	ErrAreaM2Invalida               = errors.New("area em m2 deve ser maior que zero")
 )
 
 // EnderecoReader define operacoes de leitura do repositorio de enderecos.
@@ -128,6 +130,49 @@ func ValidarEstado(estado string) error {
 	}
 	if !ufsValidas[estado] {
 		return ErrEstadoInvalido
+	}
+	return nil
+}
+
+// ValidarComodos garante que cada contador de comodo seja >= 0, espelhando
+// os CHECKs num_quartos/num_banheiros/num_salas/num_cozinhas do banco.
+// Regra de negocio adicional: exige pelo menos 1 quarto (endereco residencial).
+func ValidarComodos(quartos, banheiros, salas, cozinhas int) error {
+	if quartos < 0 || banheiros < 0 || salas < 0 || cozinhas < 0 {
+		return ErrComodoNegativo
+	}
+	if quartos < 1 {
+		return ErrComodoInvalido
+	}
+	return nil
+}
+
+// ValidarAreaM2 garante > 0 quando presente, espelhando o CHECK do banco.
+// Zero significa "nao informado" e eh aceito.
+func ValidarAreaM2(area float64) error {
+	if area == 0 {
+		return nil
+	}
+	if area <= 0 {
+		return ErrAreaM2Invalida
+	}
+	return nil
+}
+
+// ValidarFaixaCEP garante cep_fim >= cep_inicio quando ambos presentes,
+// espelhando o CHECK ck_regioes_cep_ordem. Ambos podem ser vazios.
+func ValidarFaixaCEP(cepInicio, cepFim string) error {
+	if cepInicio == "" || cepFim == "" {
+		return nil
+	}
+	if err := ValidarCEP(cepInicio); err != nil {
+		return err
+	}
+	if err := ValidarCEP(cepFim); err != nil {
+		return err
+	}
+	if cepFim < cepInicio {
+		return errors.New("cep_fim deve ser maior ou igual a cep_inicio")
 	}
 	return nil
 }

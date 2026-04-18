@@ -194,6 +194,9 @@ func (s *EnderecoService) desmarcarPrincipal(ctx context.Context, clienteID uuid
 }
 
 // validarRequest valida os campos obrigatorios de um EnderecoRequest.
+// Espelha os CHECKs da tabela `enderecos` (cep formato, num_* >= 0,
+// area_m2 > 0 quando presente) e adiciona a regra de negocio de que todo
+// endereco residencial precisa ter ao menos 1 quarto.
 func (s *EnderecoService) validarRequest(req domain.EnderecoRequest) error {
 	cep := limparMascara(req.CEP)
 	if err := domain.ValidarCEP(cep); err != nil {
@@ -209,8 +212,11 @@ func (s *EnderecoService) validarRequest(req domain.EnderecoRequest) error {
 	if err := domain.ValidarEstado(estado); err != nil {
 		return err
 	}
-	if req.NumQuartos < 1 {
-		return domain.ErrComodoInvalido
+	if err := domain.ValidarComodos(req.NumQuartos, req.NumBanheiros, req.NumSalas, req.NumCozinhas); err != nil {
+		return err
+	}
+	if err := domain.ValidarAreaM2(req.AreaM2); err != nil {
+		return err
 	}
 	return nil
 }
