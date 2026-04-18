@@ -205,11 +205,21 @@ func (s *EnderecoService) validarRequest(req domain.EnderecoRequest) error {
 	if strings.TrimSpace(req.Logradouro) == "" {
 		return domain.ErrLogradouroObrigatorio
 	}
+	if strings.TrimSpace(req.Numero) == "" {
+		return domain.ErrNumeroObrigatorio
+	}
+	if strings.TrimSpace(req.Bairro) == "" {
+		return domain.ErrBairroObrigatorio
+	}
 	if strings.TrimSpace(req.Cidade) == "" {
 		return domain.ErrCidadeObrigatoria
 	}
 	estado := strings.ToUpper(strings.TrimSpace(req.Estado))
 	if err := domain.ValidarEstado(estado); err != nil {
+		return err
+	}
+	// MVP opera somente em Goiania — CEP/cidade/UF precisam casar com a area de atendimento.
+	if err := domain.ValidarAreaAtendimento(cep, req.Cidade, estado); err != nil {
 		return err
 	}
 	if err := domain.ValidarComodos(req.NumQuartos, req.NumBanheiros, req.NumSalas, req.NumCozinhas); err != nil {

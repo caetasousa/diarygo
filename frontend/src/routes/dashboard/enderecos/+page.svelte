@@ -20,11 +20,11 @@
 	let bairro = $state('');
 	let cidade = $state('');
 	let estado = $state('');
-	let numQuartos = $state(1);
-	let numBanheiros = $state(1);
-	let numSalas = $state(1);
-	let numCozinhas = $state(1);
-	let areaM2 = $state(0);
+	let numQuartos = $state<number | null>(null);
+	let numBanheiros = $state<number | null>(null);
+	let numSalas = $state<number | null>(null);
+	let numCozinhas = $state<number | null>(null);
+	let areaM2 = $state<number | null>(null);
 	let principal = $state(false);
 	let erros = $state<Record<string, string>>({});
 
@@ -69,9 +69,9 @@
 
 	function resetar() {
 		cep = ''; logradouro = ''; numero = ''; complemento = '';
-		bairro = ''; cidade = ''; estado = '';
-		numQuartos = 1; numBanheiros = 1; numSalas = 1; numCozinhas = 1;
-		areaM2 = 0; principal = false; erros = {};
+		bairro = ''; cidade = 'Goiânia'; estado = 'GO';
+		numQuartos = null; numBanheiros = null; numSalas = null; numCozinhas = null;
+		areaM2 = null; principal = false; erros = {};
 	}
 
 	function cancelar() {
@@ -83,9 +83,15 @@
 		erros = {};
 		if (cep.replace(/\D/g, '').length !== 8) erros.cep = 'CEP inválido';
 		if (!logradouro.trim()) erros.logradouro = 'Logradouro é obrigatório';
+		if (!numero.trim()) erros.numero = 'Número é obrigatório';
+		if (!bairro.trim()) erros.bairro = 'Bairro é obrigatório';
 		if (!cidade.trim()) erros.cidade = 'Cidade é obrigatória';
 		if (estado.length !== 2) erros.estado = 'Estado inválido';
-		if (numQuartos < 1) erros.num_quartos = 'Mínimo 1 quarto';
+		if (numQuartos == null || numQuartos < 1) erros.num_quartos = 'Mínimo 1 quarto';
+		if (numBanheiros != null && numBanheiros < 0) erros.num_banheiros = 'Inválido';
+		if (numSalas != null && numSalas < 0) erros.num_salas = 'Inválido';
+		if (numCozinhas != null && numCozinhas < 0) erros.num_cozinhas = 'Inválido';
+		if (areaM2 != null && areaM2 < 0) erros.area_m2 = 'Inválido';
 		return Object.keys(erros).length === 0;
 	}
 
@@ -98,9 +104,12 @@
 				complemento: complemento.trim(), bairro: bairro.trim(),
 				cidade: cidade.trim(), estado: estado.toUpperCase().trim(),
 				cep: cep.replace(/\D/g, ''),
-				num_quartos: numQuartos, num_banheiros: numBanheiros,
-				num_salas: numSalas, num_cozinhas: numCozinhas,
-				area_m2: areaM2, principal
+				num_quartos: numQuartos ?? 0,
+				num_banheiros: numBanheiros ?? 0,
+				num_salas: numSalas ?? 0,
+				num_cozinhas: numCozinhas ?? 0,
+				area_m2: areaM2 ?? 0,
+				principal
 			};
 			if (editandoID) {
 				await api.atualizarEndereco(editandoID, req);
@@ -151,7 +160,7 @@
 	<div class="page-header">
 		<div>
 			<h1 class="page-title">Endereços</h1>
-			<p class="page-sub">Locais onde o serviço será realizado.</p>
+			<p class="page-sub">Locais onde o serviço será realizado. Atendemos apenas em Goiânia/GO.</p>
 		</div>
 		{#if !mostrarFormulario}
 			<button class="btn btn-white" onclick={abrirNovo}>
@@ -187,7 +196,8 @@
 					<div class="form-group">
 						<label for="numero" class="form-label">Número</label>
 						<input id="numero" type="text" maxlength="20" class="form-input"
-							bind:value={numero} placeholder="123" />
+							class:input-error={!!erros.numero} bind:value={numero} placeholder="123" />
+						{#if erros.numero}<p class="form-error">{erros.numero}</p>{/if}
 					</div>
 
 					<div class="form-group">
@@ -199,7 +209,8 @@
 					<div class="form-group">
 						<label for="bairro" class="form-label">Bairro</label>
 						<input id="bairro" type="text" maxlength="100" class="form-input"
-							bind:value={bairro} placeholder="Bairro" />
+							class:input-error={!!erros.bairro} bind:value={bairro} placeholder="Bairro" />
+						{#if erros.bairro}<p class="form-error">{erros.bairro}</p>{/if}
 					</div>
 
 					<div class="form-group">
@@ -233,19 +244,27 @@
 					</div>
 					<div class="form-group">
 						<label for="banheiros" class="form-label">Banheiros</label>
-						<input id="banheiros" type="number" min="0" max="20" class="form-input" bind:value={numBanheiros} />
+						<input id="banheiros" type="number" min="0" max="20" class="form-input"
+							class:input-error={!!erros.num_banheiros} bind:value={numBanheiros} />
+						{#if erros.num_banheiros}<p class="form-error">{erros.num_banheiros}</p>{/if}
 					</div>
 					<div class="form-group">
 						<label for="salas" class="form-label">Salas</label>
-						<input id="salas" type="number" min="0" max="20" class="form-input" bind:value={numSalas} />
+						<input id="salas" type="number" min="0" max="20" class="form-input"
+							class:input-error={!!erros.num_salas} bind:value={numSalas} />
+						{#if erros.num_salas}<p class="form-error">{erros.num_salas}</p>{/if}
 					</div>
 					<div class="form-group">
 						<label for="cozinhas" class="form-label">Cozinhas</label>
-						<input id="cozinhas" type="number" min="0" max="10" class="form-input" bind:value={numCozinhas} />
+						<input id="cozinhas" type="number" min="0" max="10" class="form-input"
+							class:input-error={!!erros.num_cozinhas} bind:value={numCozinhas} />
+						{#if erros.num_cozinhas}<p class="form-error">{erros.num_cozinhas}</p>{/if}
 					</div>
 					<div class="form-group">
 						<label for="area" class="form-label">Área (m²)</label>
-						<input id="area" type="number" min="0" step="0.1" class="form-input" bind:value={areaM2} />
+						<input id="area" type="number" min="0" step="0.1" class="form-input"
+							class:input-error={!!erros.area_m2} bind:value={areaM2} />
+						{#if erros.area_m2}<p class="form-error">{erros.area_m2}</p>{/if}
 					</div>
 					<div class="form-group" style="display:flex; align-items:flex-end;">
 						<div class="checkbox-row">

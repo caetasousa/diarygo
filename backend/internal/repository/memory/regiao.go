@@ -24,32 +24,37 @@ func NewRegiaoRepository() *RegiaoRepository {
 	return r
 }
 
-// seed carrega regioes de exemplo para o MVP.
+// seed carrega as 12 regioes administrativas oficiais de Goiania/GO.
+// A prefeitura divide a cidade em regioes para fins de planejamento; cada
+// uma agrega dezenas de setores/bairros. As faixas de CEP sao aproximadas
+// com base na cobertura dos Correios e servem para sugerir a regiao a
+// partir do CEP do cliente — pode haver excecoes em bairros de divisa.
 func (r *RegiaoRepository) seed() {
-	regioes := []*domain.Regiao{
-		{
-			ID: uuid.New(), Nome: "Centro - SP", Cidade: "São Paulo", Estado: "SP",
-			CEPInicio: "01000000", CEPFim: "01499999", Ativa: true, CriadoEm: time.Now(),
-		},
-		{
-			ID: uuid.New(), Nome: "Zona Sul - SP", Cidade: "São Paulo", Estado: "SP",
-			CEPInicio: "04000000", CEPFim: "04999999", Ativa: true, CriadoEm: time.Now(),
-		},
-		{
-			ID: uuid.New(), Nome: "Zona Norte - SP", Cidade: "São Paulo", Estado: "SP",
-			CEPInicio: "02000000", CEPFim: "02999999", Ativa: true, CriadoEm: time.Now(),
-		},
-		{
-			ID: uuid.New(), Nome: "Centro - RJ", Cidade: "Rio de Janeiro", Estado: "RJ",
-			CEPInicio: "20000000", CEPFim: "20999999", Ativa: true, CriadoEm: time.Now(),
-		},
-		{
-			ID: uuid.New(), Nome: "Belo Horizonte", Cidade: "Belo Horizonte", Estado: "MG",
-			CEPInicio: "30000000", CEPFim: "30999999", Ativa: true, CriadoEm: time.Now(),
-		},
+	const uf = "GO"
+	const cidade = "Goiânia"
+	regioes := []struct {
+		nome              string
+		cepInicio, cepFim string
+	}{
+		{"Região Central", "74000000", "74049999"},
+		{"Região Norte", "74300000", "74309999"},
+		{"Região Sul", "74080000", "74299999"},
+		{"Região Sudoeste", "74310000", "74399999"},
+		{"Região Oeste", "74110000", "74149999"},
+		{"Região Noroeste", "74400000", "74499999"},
+		{"Região Campinas-Centro", "74500000", "74569999"},
+		{"Região Macambira", "74570000", "74599999"},
+		{"Região Leste", "74600000", "74669999"},
+		{"Região Vale do Meia Ponte", "74670000", "74799999"},
+		{"Região Sudeste", "74800000", "74899999"},
+		{"Região Mendanha", "74900000", "74999999"},
 	}
 	for _, reg := range regioes {
-		r.regioes[reg.ID] = reg
+		id := uuid.New()
+		r.regioes[id] = &domain.Regiao{
+			ID: id, Nome: reg.nome, Cidade: cidade, Estado: uf,
+			CEPInicio: reg.cepInicio, CEPFim: reg.cepFim, Ativa: true, CriadoEm: time.Now(),
+		}
 	}
 }
 

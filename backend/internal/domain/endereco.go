@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -38,12 +39,65 @@ var (
 	ErrEnderecoNaoPertenceAoCliente = errors.New("endereco nao pertence ao cliente")
 	ErrCEPInvalido                  = errors.New("CEP invalido")
 	ErrLogradouroObrigatorio        = errors.New("logradouro e obrigatorio")
+	ErrNumeroObrigatorio            = errors.New("numero e obrigatorio")
+	ErrBairroObrigatorio            = errors.New("bairro e obrigatorio")
 	ErrCidadeObrigatoria            = errors.New("cidade e obrigatoria")
 	ErrEstadoInvalido               = errors.New("estado invalido: deve ser UF com 2 letras")
 	ErrComodoInvalido               = errors.New("numero de comodos deve ser maior que zero")
 	ErrComodoNegativo               = errors.New("numero de comodos nao pode ser negativo")
 	ErrAreaM2Invalida               = errors.New("area em m2 deve ser maior que zero")
+	ErrEnderecoForaDeGoiania        = errors.New("endereco fora da area de atendimento: apenas Goiania/GO")
 )
+
+// Faixa de CEP cobrindo Goiania (74000-000 a 74999-999).
+// O MVP opera somente em Goiania; o service valida CEP e cidade/UF contra essa faixa.
+const (
+	CEPGoianiaInicio = "74000000"
+	CEPGoianiaFim    = "74999999"
+	UFAtendida       = "GO"
+)
+
+// ValidarAreaAtendimento garante que CEP, cidade e UF pertencem a Goiania.
+// CEP deve cair na faixa 74000000..74999999, UF deve ser GO, cidade deve
+// normalizar para "goiania" (tolerando acento e caixa).
+func ValidarAreaAtendimento(cep, cidade, estado string) error {
+	if err := ValidarCEP(cep); err != nil {
+		return err
+	}
+	if cep < CEPGoianiaInicio || cep > CEPGoianiaFim {
+		return ErrEnderecoForaDeGoiania
+	}
+	if strings.ToUpper(strings.TrimSpace(estado)) != UFAtendida {
+		return ErrEnderecoForaDeGoiania
+	}
+	if normalizarCidade(cidade) != "goiania" {
+		return ErrEnderecoForaDeGoiania
+	}
+	return nil
+}
+
+// normalizarCidade remove acentos e caixa para comparacao tolerante
+// (ex: "Goiânia", "goiania", "GOIÂNIA" → "goiania").
+func normalizarCidade(s string) string {
+	s = strings.ToLower(strings.TrimSpace(s))
+	m := map[rune]rune{
+		'á': 'a', 'à': 'a', 'â': 'a', 'ã': 'a', 'ä': 'a',
+		'é': 'e', 'è': 'e', 'ê': 'e', 'ë': 'e',
+		'í': 'i', 'ì': 'i', 'î': 'i', 'ï': 'i',
+		'ó': 'o', 'ò': 'o', 'ô': 'o', 'õ': 'o', 'ö': 'o',
+		'ú': 'u', 'ù': 'u', 'û': 'u', 'ü': 'u',
+		'ç': 'c', 'ñ': 'n',
+	}
+	b := make([]rune, 0, len(s))
+	for _, r := range s {
+		if rep, ok := m[r]; ok {
+			b = append(b, rep)
+		} else {
+			b = append(b, r)
+		}
+	}
+	return string(b)
+}
 
 // EnderecoReader define operacoes de leitura do repositorio de enderecos.
 type EnderecoReader interface {

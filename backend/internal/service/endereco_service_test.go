@@ -29,12 +29,12 @@ func setupEnderecoService(t *testing.T) (*service.EnderecoService, *service.Clie
 
 func enderecoValido() domain.EnderecoRequest {
 	return domain.EnderecoRequest{
-		Logradouro:   "Rua das Flores",
+		Logradouro:   "Rua T-30",
 		Numero:       "123",
-		Bairro:       "Centro",
-		Cidade:       "São Paulo",
-		Estado:       "SP",
-		CEP:          "01310-100",
+		Bairro:       "Setor Bueno",
+		Cidade:       "Goiânia",
+		Estado:       "GO",
+		CEP:          "74210-090",
 		NumQuartos:   2,
 		NumBanheiros: 1,
 		NumSalas:     1,
@@ -51,14 +51,14 @@ func TestCriarEndereco_Sucesso(t *testing.T) {
 	if err != nil {
 		t.Fatalf("esperava sucesso, got: %v", err)
 	}
-	if resp.Logradouro != "Rua das Flores" {
+	if resp.Logradouro != "Rua T-30" {
 		t.Errorf("logradouro incorreto: %s", resp.Logradouro)
 	}
-	if resp.CEP != "01310100" {
-		t.Errorf("CEP esperado sem mascara '01310100', got '%s'", resp.CEP)
+	if resp.CEP != "74210090" {
+		t.Errorf("CEP esperado sem mascara '74210090', got '%s'", resp.CEP)
 	}
-	if resp.Estado != "SP" {
-		t.Errorf("estado esperado 'SP', got '%s'", resp.Estado)
+	if resp.Estado != "GO" {
+		t.Errorf("estado esperado 'GO', got '%s'", resp.Estado)
 	}
 }
 

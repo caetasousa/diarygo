@@ -8,28 +8,27 @@
 		LayoutDashboard,
 		User,
 		MapPin,
-		FileText,
-		Users,
-		Map,
-		CalendarClock,
+		BadgeCheck,
+		CompassIcon,
 		LogOut,
-		Bell,
-		Search,
-		ChevronDown,
 		Sparkles,
 		LifeBuoy,
 		CalendarCheck,
 		ShieldCheck,
-		Settings,
 		Plus
 	} from 'lucide-svelte';
 
 	let { children } = $props();
 
-	let profileOpen = $state(false);
-	let notifOpen = $state(false);
+	type NavItem = {
+		href: string;
+		label: string;
+		icon: typeof LayoutDashboard;
+		exact?: boolean;
+	};
+	type NavGroup = { section: string; items: NavItem[] };
 
-	const navCliente = [
+	const navCliente: NavGroup[] = [
 		{ section: 'Principal', items: [
 			{ href: '/dashboard', label: 'Visão geral', icon: LayoutDashboard, exact: true },
 			{ href: '/solicitacoes', label: 'Meus serviços', icon: CalendarCheck },
@@ -40,19 +39,15 @@
 		]},
 	];
 
-	const navProfissional = [
+	const navProfissional: NavGroup[] = [
 		{ section: 'Principal', items: [
 			{ href: '/dashboard', label: 'Visão geral', icon: LayoutDashboard, exact: true },
 			{ href: '/agenda', label: 'Minha agenda', icon: CalendarCheck },
 		]},
-		{ section: 'Cadastro', items: [
+		{ section: 'Conta', items: [
 			{ href: '/dashboard/perfil', label: 'Meu perfil', icon: User },
-			{ href: '/dashboard/documentos', label: 'Documentos', icon: FileText },
-			{ href: '/dashboard/referencias', label: 'Referências', icon: Users },
-		]},
-		{ section: 'Atuação', items: [
-			{ href: '/dashboard/regioes', label: 'Regiões', icon: Map },
-			{ href: '/dashboard/disponibilidade', label: 'Disponibilidade', icon: CalendarClock },
+			{ href: '/dashboard/credenciamento', label: 'Credenciamento', icon: BadgeCheck },
+			{ href: '/dashboard/atuacao', label: 'Atuação', icon: CompassIcon },
 		]},
 	];
 
@@ -77,13 +72,7 @@
 		goto('/');
 	}
 
-	function closeMenus() {
-		profileOpen = false;
-		notifOpen = false;
-	}
 </script>
-
-<svelte:window onclick={closeMenus} />
 
 <div class="dash-shell">
 	<!-- ═══════════════ Sidebar ═══════════════ -->
@@ -132,6 +121,16 @@
 		</div>
 
 		<div class="sidebar-foot">
+			<div class="user-card">
+				<span class="user-avatar">{emailInitial}</span>
+				<div class="user-info">
+					<span class="user-email" title={emailLabel}>{emailLabel}</span>
+					<span class="user-role">{roleLabel}</span>
+				</div>
+				<button class="user-logout" onclick={handleLogout} aria-label="Sair">
+					<LogOut size={14} strokeWidth={1.8} />
+				</button>
+			</div>
 			<a href="/ajuda" class="foot-link">
 				<LifeBuoy size={14} strokeWidth={1.8} />
 				<span>Central de ajuda</span>
@@ -145,95 +144,6 @@
 
 	<!-- ═══════════════ Main column ═══════════════ -->
 	<div class="dash-column">
-		<!-- Topbar -->
-		<header class="topbar">
-		<div
-			class="topbar-inner"
-			role="presentation"
-			onclick={(e) => e.stopPropagation()}
-			onkeydown={(e) => e.stopPropagation()}
-		>
-			<div class="topbar-search">
-				<Search size={15} strokeWidth={1.8} />
-				<input type="text" placeholder="Buscar serviços, endereços, diaristas..." />
-				<kbd class="kbd">⌘K</kbd>
-			</div>
-
-			<div class="topbar-actions">
-				<div class="topbar-menu-wrap">
-					<button
-						class="topbar-icon-btn"
-						onclick={() => { notifOpen = !notifOpen; profileOpen = false; }}
-						aria-label="Notificações"
-					>
-						<Bell size={16} strokeWidth={1.8} />
-						<span class="notif-dot"></span>
-					</button>
-
-					{#if notifOpen}
-						<div class="dropdown notif-dropdown">
-							<div class="dropdown-head">
-								<span class="dropdown-title">Notificações</span>
-								<button class="dropdown-action">Marcar lidas</button>
-							</div>
-							<div class="notif-empty">
-								<Bell size={20} strokeWidth={1.4} />
-								<span class="notif-empty-title">Nenhuma notificação</span>
-								<span class="notif-empty-sub">Avisos sobre agendamentos aparecerão aqui.</span>
-							</div>
-						</div>
-					{/if}
-				</div>
-
-				<div class="topbar-divider"></div>
-
-				<div class="topbar-menu-wrap">
-					<button
-						class="profile-btn"
-						onclick={() => { profileOpen = !profileOpen; notifOpen = false; }}
-					>
-						<span class="profile-avatar">{emailInitial}</span>
-						<div class="profile-info">
-							<span class="profile-name">{emailLabel}</span>
-							<span class="profile-role">{roleLabel}</span>
-						</div>
-						<ChevronDown size={14} strokeWidth={1.8} />
-					</button>
-
-					{#if profileOpen}
-						<div class="dropdown profile-dropdown">
-							<div class="profile-dropdown-head">
-								<span class="profile-avatar profile-avatar-lg">{emailInitial}</span>
-								<div class="profile-info">
-									<span class="profile-name">{emailLabel}</span>
-									<span class="profile-role">{roleLabel}</span>
-								</div>
-							</div>
-							<div class="dropdown-sep"></div>
-							<a href="/dashboard/perfil" class="dropdown-item">
-								<User size={14} strokeWidth={1.8} />
-								<span>Meu perfil</span>
-							</a>
-							<a href="/dashboard/configuracoes" class="dropdown-item">
-								<Settings size={14} strokeWidth={1.8} />
-								<span>Preferências</span>
-							</a>
-							<a href="/ajuda" class="dropdown-item">
-								<LifeBuoy size={14} strokeWidth={1.8} />
-								<span>Suporte</span>
-							</a>
-							<div class="dropdown-sep"></div>
-							<button class="dropdown-item danger" onclick={handleLogout}>
-								<LogOut size={14} strokeWidth={1.8} />
-								<span>Sair</span>
-							</button>
-						</div>
-					{/if}
-				</div>
-			</div>
-		</div>
-		</header>
-
 		<!-- Page content -->
 		<main class="dash-main">
 			{@render children()}
@@ -483,140 +393,24 @@
 		flex-direction: column;
 	}
 
-	/* ═══════════════ Topbar ═══════════════ */
-	.topbar {
-		border-bottom: 1px solid var(--border-frost);
-		background: rgba(0, 0, 0, 0.7);
-		backdrop-filter: blur(12px);
-		-webkit-backdrop-filter: blur(12px);
-		position: sticky;
-		top: 0;
-		z-index: 20;
-	}
-
-	.topbar-inner {
-		display: flex;
-		align-items: center;
-		gap: 16px;
-		padding: 12px 32px;
-	}
-
-	.topbar-search {
-		display: flex;
-		align-items: center;
-		gap: 9px;
-		flex: 1;
-		max-width: 440px;
-		padding: 8px 14px;
-		background: rgba(255, 255, 255, 0.03);
-		border: 1px solid var(--border-frost);
-		border-radius: 8px;
-		color: var(--color-text-tertiary);
-		transition: border-color 0.15s, background 0.15s;
-	}
-
-	.topbar-search:focus-within {
-		border-color: rgba(214, 235, 253, 0.3);
-		background: rgba(255, 255, 255, 0.05);
-	}
-
-	.topbar-search input {
-		flex: 1;
-		background: transparent;
-		border: none;
-		outline: none;
-		color: var(--color-text-primary);
-		font-size: 0.8125rem;
-		font-family: var(--font-body);
-	}
-
-	.topbar-search input::placeholder {
-		color: var(--color-text-tertiary);
-	}
-
-	.kbd {
-		font-family: var(--font-mono);
-		font-size: 0.625rem;
-		color: var(--color-text-tertiary);
-		background: rgba(255, 255, 255, 0.04);
-		border: 1px solid var(--border-frost);
-		border-radius: 4px;
-		padding: 1px 5px;
-	}
-
-	.topbar-actions {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-	}
-
-	.topbar-divider {
-		width: 1px;
-		height: 22px;
-		background: var(--border-frost);
-		margin: 0 4px;
-	}
-
-	.topbar-icon-btn {
-		position: relative;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		width: 34px;
-		height: 34px;
-		background: transparent;
-		border: 1px solid transparent;
-		border-radius: 8px;
-		color: var(--color-text-secondary);
-		cursor: pointer;
-		transition: color 0.12s, background 0.12s, border-color 0.12s;
-	}
-
-	.topbar-icon-btn:hover {
-		color: var(--color-text-primary);
-		background: rgba(255, 255, 255, 0.04);
-		border-color: var(--border-frost);
-	}
-
-	.notif-dot {
-		position: absolute;
-		top: 8px;
-		right: 8px;
-		width: 6px;
-		height: 6px;
-		border-radius: 50%;
-		background: var(--color-orange-10);
-		border: 1.5px solid var(--color-black);
-	}
-
-	/* Profile button */
-	.topbar-menu-wrap {
-		position: relative;
-	}
-
-	.profile-btn {
+	/* User card na sidebar */
+	.user-card {
 		display: flex;
 		align-items: center;
 		gap: 10px;
-		padding: 5px 10px 5px 5px;
-		background: transparent;
-		border: 1px solid transparent;
+		padding: 8px;
+		background: rgba(255, 255, 255, 0.03);
+		border: 1px solid var(--border-frost);
 		border-radius: 8px;
-		cursor: pointer;
-		transition: background 0.12s, border-color 0.12s;
+		margin-bottom: 8px;
 	}
 
-	.profile-btn:hover {
-		background: rgba(255, 255, 255, 0.04);
-		border-color: var(--border-frost);
-	}
-
-	.profile-avatar {
+	.user-avatar {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		width: 26px;
-		height: 26px;
+		width: 28px;
+		height: 28px;
 		border-radius: 50%;
 		background: linear-gradient(135deg, var(--color-orange-10), #ff6b1a);
 		color: #1a0a00;
@@ -625,21 +419,15 @@
 		flex-shrink: 0;
 	}
 
-	.profile-avatar-lg {
-		width: 38px;
-		height: 38px;
-		font-size: 0.9375rem;
-	}
-
-	.profile-info {
+	.user-info {
 		display: flex;
 		flex-direction: column;
 		gap: 0;
+		flex: 1;
 		min-width: 0;
-		max-width: 180px;
 	}
 
-	.profile-name {
+	.user-email {
 		font-size: 0.75rem;
 		font-weight: 500;
 		color: var(--color-text-primary);
@@ -648,145 +436,30 @@
 		text-overflow: ellipsis;
 	}
 
-	.profile-role {
+	.user-role {
 		font-size: 0.6875rem;
 		color: var(--color-text-tertiary);
 	}
 
-	.profile-btn :global(svg) {
+	.user-logout {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 26px;
+		height: 26px;
+		background: transparent;
+		border: 1px solid transparent;
+		border-radius: 6px;
 		color: var(--color-text-tertiary);
+		cursor: pointer;
+		transition: color 0.12s, background 0.12s, border-color 0.12s;
 		flex-shrink: 0;
 	}
 
-	/* Dropdowns */
-	.dropdown {
-		position: absolute;
-		top: calc(100% + 8px);
-		right: 0;
-		min-width: 280px;
-		background: #0a0a0a;
-		border: 1px solid var(--border-frost);
-		border-radius: 10px;
-		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), var(--shadow-ring);
-		padding: 6px;
-		z-index: 50;
-		animation: dropdownIn 0.15s ease-out;
-	}
-
-	@keyframes dropdownIn {
-		from { opacity: 0; transform: translateY(-4px); }
-		to { opacity: 1; transform: translateY(0); }
-	}
-
-	.dropdown-head {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 8px 10px 10px;
-	}
-
-	.dropdown-title {
-		font-size: 0.75rem;
-		font-weight: 600;
-		color: var(--color-text-primary);
-	}
-
-	.dropdown-action {
-		background: transparent;
-		border: none;
-		color: var(--color-text-tertiary);
-		font-size: 0.6875rem;
-		cursor: pointer;
-		padding: 2px 4px;
-		border-radius: 4px;
-	}
-
-	.dropdown-action:hover {
-		color: var(--color-text-primary);
-	}
-
-	.dropdown-sep {
-		height: 1px;
-		background: var(--border-frost);
-		margin: 4px 0;
-	}
-
-	.dropdown-item {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		width: 100%;
-		padding: 8px 10px;
-		background: transparent;
-		border: none;
-		border-radius: 6px;
-		font-size: 0.8125rem;
-		color: var(--color-text-secondary);
-		text-decoration: none;
-		cursor: pointer;
-		text-align: left;
-		transition: color 0.12s, background 0.12s;
-		font-family: var(--font-body);
-	}
-
-	.dropdown-item:hover {
-		color: var(--color-text-primary);
-		background: rgba(255, 255, 255, 0.05);
-		opacity: 1;
-	}
-
-	.dropdown-item.danger:hover {
+	.user-logout:hover {
 		color: var(--color-red-10);
 		background: var(--color-red-5);
-	}
-
-	.dropdown-item :global(svg) {
-		color: var(--color-text-tertiary);
-	}
-
-	.dropdown-item:hover :global(svg) {
-		color: currentColor;
-	}
-
-	.notif-dropdown {
-		min-width: 320px;
-	}
-
-	.notif-empty {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		text-align: center;
-		gap: 6px;
-		padding: 28px 16px 20px;
-	}
-
-	.notif-empty :global(svg) {
-		color: var(--color-text-tertiary);
-		margin-bottom: 4px;
-	}
-
-	.notif-empty-title {
-		font-size: 0.8125rem;
-		font-weight: 500;
-		color: var(--color-text-primary);
-	}
-
-	.notif-empty-sub {
-		font-size: 0.6875rem;
-		color: var(--color-text-tertiary);
-		max-width: 220px;
-	}
-
-	.profile-dropdown {
-		min-width: 260px;
-	}
-
-	.profile-dropdown-head {
-		display: flex;
-		align-items: center;
-		gap: 12px;
-		padding: 10px 10px 12px;
+		border-color: var(--border-frost);
 	}
 
 	/* ═══════════════ Main ═══════════════ */
@@ -813,8 +486,14 @@
 		.status-body,
 		.sidebar-cta,
 		.foot-link span,
-		.foot-trust span {
+		.foot-trust span,
+		.user-info {
 			display: none;
+		}
+
+		.user-card {
+			justify-content: center;
+			padding: 6px;
 		}
 
 		.sidebar-cta {
@@ -847,21 +526,4 @@
 		}
 	}
 
-	@media (max-width: 640px) {
-		.topbar-inner {
-			padding: 10px 16px;
-		}
-
-		.topbar-search {
-			display: none;
-		}
-
-		.profile-info {
-			display: none;
-		}
-
-		.topbar-divider {
-			display: none;
-		}
-	}
 </style>

@@ -23,6 +23,8 @@
 --     profissionais.total_servicos >= 0        → domain.ValidarTotalServicos
 --     profissionais.status ENUM                → constantes StatusPendente/Aprovada/...
 --     enderecos.cep CHECK '^[0-9]{8}$'         → domain.ValidarCEP
+--     enderecos.cep faixa 74000000..74999999   → domain.ValidarAreaAtendimento (MVP Goiânia)
+--     enderecos.cidade/estado = Goiânia/GO     → domain.ValidarAreaAtendimento
 --     enderecos.num_* >= 0                     → domain.ValidarComodos
 --     enderecos.area_m2 > 0 | NULL             → domain.ValidarAreaM2
 --     enderecos UNIQUE (principal por cliente) → EnderecoService.desmarcarPrincipal

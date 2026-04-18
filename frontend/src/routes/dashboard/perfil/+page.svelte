@@ -5,6 +5,9 @@
 	import { api } from '$lib/api/client';
 	import CpfInput from '$lib/components/CpfInput.svelte';
 	import TelefoneInput from '$lib/components/TelefoneInput.svelte';
+	import Avatar from '$lib/components/Avatar.svelte';
+	import ImagePreview from '$lib/components/ImagePreview.svelte';
+	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import type { ClienteResponse, ProfissionalResponse } from '$lib/types';
 
 	let tipo = $derived($auth.payload?.tipo ?? null);
@@ -109,20 +112,6 @@
 		}
 	}
 
-	const statusLabel: Record<string, string> = {
-		PENDENTE: 'Pendente de aprovação',
-		APROVADA: 'Aprovada',
-		REPROVADA: 'Reprovada',
-		SUSPENSA: 'Suspensa',
-		DESCREDENCIADA: 'Descredenciada'
-	};
-	const statusBadge: Record<string, string> = {
-		PENDENTE: 'badge-orange',
-		APROVADA: 'badge-green',
-		REPROVADA: 'badge-red',
-		SUSPENSA: 'badge-red',
-		DESCREDENCIADA: 'badge-red'
-	};
 </script>
 
 <svelte:head>
@@ -135,12 +124,41 @@
 			<h1 class="page-title">Meu perfil</h1>
 			<p class="page-sub">Informações pessoais e dados de conta.</p>
 		</div>
-		{#if tipo === 'PROFISSIONAL' && perfilProf}
-			<span class="badge {statusBadge[perfilProf.status] ?? 'badge-blue'}">
-				{statusLabel[perfilProf.status] ?? perfilProf.status}
-			</span>
-		{/if}
 	</div>
+
+	{#if !carregando && tipo === 'PROFISSIONAL' && perfilProf}
+		<div class="identity-card">
+			<Avatar url={fotoUrlProf || perfilProf.foto_url} nome={nomeProf || perfilProf.nome || 'Profissional'} size="xl" />
+			<div class="identity-info">
+				<span class="identity-name">{perfilProf.nome || 'Novo profissional'}</span>
+				<StatusBadge status={perfilProf.status} />
+			</div>
+			<div class="identity-stats">
+				<div class="identity-stat">
+					<span class="identity-stat-num">{perfilProf.nota_media.toFixed(1)}</span>
+					<span class="identity-stat-label">Nota média</span>
+				</div>
+				<div class="identity-stat">
+					<span class="identity-stat-num">{perfilProf.total_servicos}</span>
+					<span class="identity-stat-label">Serviços</span>
+				</div>
+			</div>
+		</div>
+	{:else if !carregando && tipo === 'CLIENTE' && perfilCliente}
+		<div class="identity-card">
+			<Avatar nome={nomeCliente || perfilCliente.nome || 'Cliente'} size="xl" />
+			<div class="identity-info">
+				<span class="identity-name">{perfilCliente.nome || 'Cliente'}</span>
+				<span class="identity-role">Cliente · Goiânia/GO</span>
+			</div>
+			<div class="identity-stats">
+				<div class="identity-stat">
+					<span class="identity-stat-num">{perfilCliente.score}</span>
+					<span class="identity-stat-label">Score</span>
+				</div>
+			</div>
+		</div>
+	{/if}
 
 	{#if carregando}
 		<div class="loading-state">
@@ -234,15 +252,19 @@
 
 					<div class="form-group">
 						<label for="foto-url" class="form-label">URL da foto de perfil</label>
-						<input
-							id="foto-url"
-							type="url"
-							autocomplete="off"
-							maxlength="500"
-							placeholder="https://..."
-							class="form-input"
-							bind:value={fotoUrlProf}
-						/>
+						<div class="foto-row">
+							<ImagePreview url={fotoUrlProf} alt="Foto de perfil" size="md" rounded="circle" />
+							<input
+								id="foto-url"
+								type="url"
+								autocomplete="off"
+								maxlength="500"
+								placeholder="https://..."
+								class="form-input"
+								bind:value={fotoUrlProf}
+							/>
+						</div>
+						<p class="form-hint">Cole um link de Google Drive, Dropbox ou outro serviço público.</p>
 					</div>
 
 					<div class="checkbox-row">
@@ -259,6 +281,36 @@
 					</div>
 				</form>
 			</div>
+
+			{#if perfilProf}
+				<div class="info-panel">
+					<h2 class="form-section-title">Status profissional</h2>
+					<div class="prof-stats">
+						<div class="prof-stat">
+							<span class="prof-stat-label">Avaliação</span>
+							<div class="prof-stat-value">
+								<span class="prof-stat-num">{perfilProf.nota_media.toFixed(1)}</span>
+								<span class="prof-stat-sub">/ 5.0</span>
+							</div>
+						</div>
+						<div class="prof-stat">
+							<span class="prof-stat-label">Serviços concluídos</span>
+							<div class="prof-stat-value">
+								<span class="prof-stat-num">{perfilProf.total_servicos}</span>
+							</div>
+						</div>
+						<div class="prof-stat">
+							<span class="prof-stat-label">MEI</span>
+							<div class="prof-stat-value">
+								<span class="prof-stat-num small">{perfilProf.mei ? 'Sim' : 'Não'}</span>
+							</div>
+						</div>
+					</div>
+					<p class="score-note">
+						Nota e serviços são atualizados automaticamente após cada atendimento concluído.
+					</p>
+				</div>
+			{/if}
 		</div>
 
 	{:else}
@@ -419,6 +471,103 @@
 		font-size: 0.75rem;
 		color: var(--color-text-tertiary);
 		line-height: 1.5;
+	}
+
+	/* Identity card */
+	.identity-card {
+		display: flex;
+		align-items: center;
+		gap: 20px;
+		padding: 20px 24px;
+		background: var(--bg-card);
+		border: 1px solid var(--border-frost);
+		border-radius: 12px;
+		box-shadow: var(--shadow-ring);
+		margin-bottom: 24px;
+		flex-wrap: wrap;
+	}
+	.identity-info {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		flex: 1;
+		min-width: 160px;
+	}
+	.identity-name {
+		font-size: 1.125rem;
+		font-weight: 500;
+		color: var(--color-text-primary);
+		letter-spacing: -0.3px;
+	}
+	.identity-role {
+		font-size: 0.8125rem;
+		color: var(--color-text-tertiary);
+	}
+	.identity-stats {
+		display: flex;
+		gap: 24px;
+	}
+	.identity-stat {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		min-width: 64px;
+	}
+	.identity-stat-num {
+		font-size: 1.375rem;
+		font-weight: 500;
+		color: var(--color-text-primary);
+		line-height: 1;
+		font-variant-numeric: tabular-nums;
+	}
+	.identity-stat-label {
+		font-size: 0.6875rem;
+		color: var(--color-text-tertiary);
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+	}
+
+	/* Foto row */
+	.foto-row {
+		display: flex; align-items: center; gap: 12px;
+	}
+	.foto-row .form-input { flex: 1; min-width: 0; }
+	.form-hint {
+		font-size: 0.75rem;
+		color: var(--color-text-tertiary);
+		margin-top: 6px;
+	}
+
+	/* Pro stats */
+	.prof-stats {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		margin-bottom: 14px;
+	}
+	.prof-stat {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+	.prof-stat-label {
+		font-size: 0.75rem;
+		color: var(--color-text-tertiary);
+	}
+	.prof-stat-value {
+		display: flex; align-items: baseline; gap: 4px;
+	}
+	.prof-stat-num {
+		font-size: 1.5rem;
+		font-weight: 500;
+		color: var(--color-text-primary);
+		line-height: 1;
+		font-variant-numeric: tabular-nums;
+	}
+	.prof-stat-num.small { font-size: 1rem; }
+	.prof-stat-sub {
+		font-size: 0.8125rem;
+		color: var(--color-text-tertiary);
 	}
 
 	@media (max-width: 768px) {

@@ -2,6 +2,8 @@
 	import { onMount } from 'svelte';
 	import { toasts } from '$lib/stores/toasts';
 	import { api } from '$lib/api/client';
+	import Avatar from '$lib/components/Avatar.svelte';
+	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import TelefoneInput from '$lib/components/TelefoneInput.svelte';
 	import type { ReferenciaResponse } from '$lib/types';
 
@@ -12,13 +14,6 @@
 	let nomeContato = $state('');
 	let telefoneContato = $state('');
 	let erros = $state<Record<string, string>>({});
-
-	const statusLabel: Record<string, string> = {
-		PENDENTE: 'Pendente', CONFIRMADA: 'Confirmada', NAO_CONFIRMADA: 'Não confirmada'
-	};
-	const statusBadge: Record<string, string> = {
-		PENDENTE: 'badge-orange', CONFIRMADA: 'badge-green', NAO_CONFIRMADA: 'badge-red'
-	};
 
 	onMount(carregarReferencias);
 
@@ -59,23 +54,34 @@
 			adicionando = false;
 		}
 	}
+
+	let confirmadas = $derived(referencias.filter((r) => r.status === 'CONFIRMADA').length);
 </script>
 
 <svelte:head>
-	<title>Referências — DiaryGo</title>
+	<title>Credenciamento — DiaryGo</title>
 </svelte:head>
 
 <div class="page">
 	<div class="page-header">
 		<div>
-			<h1 class="page-title">Referências</h1>
-			<p class="page-sub">Contatos que atestam sua experiência profissional.</p>
+			<h1 class="page-title">Credenciamento</h1>
+			<p class="page-sub">
+				Adicione ao menos duas referências profissionais para concluir seu cadastro.
+				Seus dados pessoais e foto de perfil ficam em
+				<a href="/dashboard/perfil">Meu perfil</a>.
+			</p>
 		</div>
-		{#if referencias.length > 0}
-			<span class="badge badge-{referencias.length >= 2 ? 'green' : 'orange'}">
-				{referencias.length} / 2 mínimo
-			</span>
-		{/if}
+		<div class="progress-stats">
+			<div class="stat">
+				<span class="stat-num">{confirmadas}</span>
+				<span class="stat-label">confirmadas</span>
+			</div>
+			<div class="stat">
+				<span class="stat-num">{referencias.length}</span>
+				<span class="stat-label">total (mín. 2)</span>
+			</div>
+		</div>
 	</div>
 
 	<div class="layout">
@@ -85,9 +91,13 @@
 				<div class="form-group">
 					<label for="nome-contato" class="form-label">Nome do contato</label>
 					<input
-						id="nome-contato" type="text" maxlength="100"
-						placeholder="Nome completo" class="form-input"
-						class:input-error={!!erros.nome} bind:value={nomeContato}
+						id="nome-contato"
+						type="text"
+						maxlength="100"
+						placeholder="Nome completo"
+						class="form-input"
+						class:input-error={!!erros.nome}
+						bind:value={nomeContato}
 						autocomplete="off"
 					/>
 					{#if erros.nome}<p class="form-error">{erros.nome}</p>{/if}
@@ -110,22 +120,18 @@
 			{:else if referencias.length === 0}
 				<div class="empty-state">
 					<p class="empty-title">Nenhuma referência adicionada</p>
-					<p class="empty-sub">Adicione ao menos 2 referências profissionais para concluir o cadastro.</p>
+					<p class="empty-sub">Adicione ao menos 2 referências profissionais.</p>
 				</div>
 			{:else}
 				<div class="ref-list">
 					{#each referencias as ref (ref.id)}
 						<div class="ref-row">
-							<div class="ref-avatar">
-								{ref.nome_contato[0].toUpperCase()}
-							</div>
+							<Avatar nome={ref.nome_contato} size="md" />
 							<div class="ref-info">
 								<span class="ref-nome">{ref.nome_contato}</span>
 								<span class="ref-tel">{ref.telefone_contato}</span>
 							</div>
-							<span class="badge {statusBadge[ref.status] ?? 'badge-blue'}">
-								{statusLabel[ref.status] ?? ref.status}
-							</span>
+							<StatusBadge status={ref.status} />
 						</div>
 					{/each}
 				</div>
@@ -135,12 +141,12 @@
 </div>
 
 <style>
-	.page { padding: 40px; max-width: 900px; margin: 0 auto; width: 100%; }
+	.page { padding: 40px; max-width: 1000px; margin: 0 auto; width: 100%; }
 
 	.page-header {
 		display: flex; align-items: flex-start;
 		justify-content: space-between; gap: 16px;
-		margin-bottom: 32px; flex-wrap: wrap;
+		margin-bottom: 24px; flex-wrap: wrap;
 	}
 
 	.page-title {
@@ -148,12 +154,24 @@
 		letter-spacing: -1px; color: var(--color-text-primary);
 		line-height: 1; margin-bottom: 6px;
 	}
+	.page-sub {
+		font-size: 0.875rem; color: var(--color-text-tertiary);
+		max-width: 520px; line-height: 1.5;
+	}
+	.page-sub a { color: var(--color-blue-10); text-decoration: none; }
+	.page-sub a:hover { text-decoration: underline; }
 
-	.page-sub { font-size: 0.875rem; color: var(--color-text-tertiary); }
+	.progress-stats { display: flex; gap: 24px; flex-wrap: wrap; }
+	.stat { display: flex; flex-direction: column; gap: 2px; }
+	.stat-num {
+		font-size: 1.25rem; font-weight: 500; color: var(--color-text-primary);
+		font-variant-numeric: tabular-nums; line-height: 1;
+	}
+	.stat-label { font-size: 0.75rem; color: var(--color-text-tertiary); }
 
 	.layout {
 		display: grid;
-		grid-template-columns: 300px 1fr;
+		grid-template-columns: 320px 1fr;
 		gap: 20px;
 		align-items: start;
 	}
@@ -180,7 +198,6 @@
 		display: flex; align-items: center; gap: 10px;
 		color: var(--color-text-tertiary); font-size: 0.875rem; padding: 32px 0;
 	}
-
 	.loading-spinner {
 		width: 16px; height: 16px;
 		border: 2px solid var(--border-frost);
@@ -188,7 +205,6 @@
 		border-radius: 50%;
 		animation: spin 0.7s linear infinite;
 	}
-
 	@keyframes spin { to { transform: rotate(360deg); } }
 
 	.empty-state {
@@ -206,37 +222,17 @@
 		overflow: hidden;
 		box-shadow: var(--shadow-ring);
 	}
-
 	.ref-row {
-		display: flex;
-		align-items: center;
-		gap: 12px;
+		display: flex; align-items: center; gap: 12px;
 		padding: 14px 18px;
 		border-bottom: 1px solid var(--border-frost);
 	}
-
 	.ref-row:last-child { border-bottom: none; }
-
-	.ref-avatar {
-		width: 34px; height: 34px; border-radius: 50%;
-		background: var(--color-blue-4);
-		border: 1px solid var(--color-blue-5);
-		display: flex; align-items: center; justify-content: center;
-		font-size: 0.8125rem; font-weight: 600;
-		color: var(--color-blue-10); flex-shrink: 0;
-	}
-
 	.ref-info {
 		display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0;
 	}
-
-	.ref-nome {
-		font-size: 0.875rem; font-weight: 500; color: var(--color-text-primary);
-	}
-
-	.ref-tel {
-		font-size: 0.75rem; color: var(--color-text-tertiary);
-	}
+	.ref-nome { font-size: 0.875rem; font-weight: 500; color: var(--color-text-primary); }
+	.ref-tel { font-size: 0.75rem; color: var(--color-text-tertiary); }
 
 	@media (max-width: 768px) {
 		.page { padding: 24px 16px; }
