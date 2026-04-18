@@ -40,7 +40,7 @@ services:
       FLYWAY_LOCATIONS: filesystem:/flyway/sql
       FLYWAY_BASELINE_ON_MIGRATE: "true"
     volumes:
-      - ./migrations:/flyway/sql
+      - ./backend/migrations:/flyway/sql
     depends_on:
       postgres:
         condition: service_healthy
