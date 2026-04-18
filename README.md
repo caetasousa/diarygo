@@ -6,6 +6,26 @@
 
 ---
 
+## 🚀 Quickstart (3 comandos)
+
+Pré-requisitos: **Go 1.25+**, **Node.js 20+** (LTS), **Docker Desktop** (só para banco/testes de integração).
+
+```bash
+git clone https://github.com/<seu-usuario>/diarygo.git && cd diarygo
+
+# Terminal 1 — backend (API Go em http://localhost:8080)
+cd backend && go run cmd/api/main.go
+
+# Terminal 2 — frontend (SvelteKit em http://localhost:5173)
+cd frontend && npm install && npm run dev
+```
+
+Pronto. Agora abra [http://localhost:5173](http://localhost:5173) e crie uma conta.
+
+> **Nas Etapas 0–11 o backend roda SEM banco de dados.** A persistência vive em memória até a Etapa 12. Se um dos passos acima falhar, veja **[§18 — Rodar o Projeto](#18-rodar-o-projeto)** ou [docs/comandos.md](docs/comandos.md).
+
+---
+
 ## Sumário
 
 1. [Visão Geral](#1-visão-geral)
@@ -25,7 +45,11 @@
 15. [Funcionalidades por Fase](#15-funcionalidades-por-fase)
 16. [Regras de Negócio — Checklist](#16-regras-de-negócio--checklist-resumido)
 17. [Esquema do Banco de Dados](#17-esquema-do-banco-de-dados)
-18. [Stack e Estrutura do Projeto](#18-stack-e-estrutura-do-projeto)
+18. [Rodar o Projeto](#18-rodar-o-projeto)
+19. [Stack e Estrutura do Projeto](#19-stack-e-estrutura-do-projeto)
+20. [Frontend — Páginas e Rotas](#20-frontend--páginas-e-rotas)
+21. [API — Referência de Rotas](#21-api--referência-de-rotas)
+22. [Documentação Auxiliar](#22-documentação-auxiliar)
 
 ---
 
@@ -683,32 +707,69 @@ erDiagram
 
 ### Tabelas — Descrição Resumida
 
-| Tabela | Descrição |
+A coluna **Migration** indica qual migration introduziu a tabela. Entradas marcadas com `(futura)` ainda vivem em [docs/schema-futuro.sql](docs/schema-futuro.sql) como referência e só recebem V{N} quando a etapa correspondente for implementada.
+
+| Tabela | Migration | Descrição |
+|---|---|---|
+| `usuarios` | V1 | Base de autenticação (email, senha_hash, tipo: CLIENTE/PROFISSIONAL/ADMIN) |
+| `clientes` | V2 | Dados do cliente, CPF, score (0–100) |
+| `profissionais` | V2 | Dados da diarista, status de credenciamento, nota_media |
+| `enderecos` | V2 | Endereços do cliente com lat/lon e características do imóvel |
+| `documentos` | V2 | Documentos enviados pela profissional para aprovação |
+| `referencias` | V2 | Referências profissionais com validação por SMS/WhatsApp |
+| `regioes` | V2 | Regiões de atendimento por cidade/bairro/faixa de CEP |
+| `regioes_atuacao` | V2 | N:N — regiões em que cada profissional atende |
+| `disponibilidades` | V2 | Agenda de disponibilidade da profissional (dia da semana + horário) |
+| `categorias_servico` | V3 (futura) | Tipos de serviço (Padrão, Pesada, Pós-Obra, etc.) |
+| `categorias_profissional` | V3 (futura) | N:N — categorias em que cada profissional atua |
+| `opcionais` | V3 (futura) | Add-ons disponíveis (geladeira, tapetes, etc.) com valor e tempo extras |
+| `tabela_precos` | V3 (futura) | Preço por hora por categoria × região, com acréscimos e descontos |
+| `solicitacoes` | V4 (futura) | Pedido de serviço feito pelo cliente (antes de ser atribuído) |
+| `solicitacao_opcionais` | V4 (futura) | N:N — add-ons escolhidos em cada solicitação |
+| `servicos` | V5 (futura) | Execução efetiva — criado quando profissional aceita, com check-in/out |
+| `historico_status` | V5 (futura) | Auditoria de todas as mudanças de status dos serviços |
+| `avaliacoes_cliente` | V6 (futura) | Avaliação do cliente sobre a profissional (pública: pontualidade, qualidade, educação) |
+| `avaliacoes_profissional` | V6 (futura) | Avaliação da profissional sobre o cliente (interna: ambiente, materiais, respeito) |
+| `recorrencias` | V7 (futura) | Controle de serviços recorrentes (semanal, quinzenal, 2x/semana) |
+| `notificacoes` | V9 (futura) | Fila de notificações por canal (PUSH, EMAIL, SMS, IN_APP) |
+| `admins` | V10 (futura) | Administradores com permissões em JSONB |
+| `transacoes` | V11 (futura) | Registro financeiro — no MVP apenas referência; estruturado para gateway futuro |
+| `dados_bancarios` | V11 (futura) | Dados bancários e chave Pix da profissional |
+
+### Histórico de Migrations
+
+Cada etapa do [PLANO.md](PLANO.md) que introduz, altera ou remove tabelas gera **uma** migration Flyway em `backend/migrations/V{N}__{nome_etapa_snake}.sql`. A regra está documentada em [CLAUDE.md](CLAUDE.md) (seção "Migrations"). Abaixo o rastro das migrations aplicadas em `developer`/`master`:
+
+> **Princípio de validação — defesa em profundidade:** toda constraint no banco (UNIQUE, CHECK, ENUM, FK) tem contraparte no service. O banco é a **última** linha de defesa; o service é a **primeira**. Cada cabeçalho `V*.sql` enumera o espelhamento `service ↔ banco` — o CHECK só dispara se o service for contornado (bug, migration futura, acesso direto). Validadores de domínio em [backend/internal/domain/](backend/internal/domain/); services em [backend/internal/service/](backend/internal/service/).
+
+#### V1 — `V1__auth_usuarios.sql`
+
+| Campo | Valor |
 |---|---|
-| `usuarios` | Base de autenticação (email, senha_hash, tipo: CLIENTE/PROFISSIONAL/ADMIN) |
-| `clientes` | Dados do cliente, CPF, score (0–100) |
-| `profissionais` | Dados da diarista, status de credenciamento, nota_media |
-| `admins` | Administradores com permissões em JSONB |
-| `documentos` | Documentos enviados pela profissional para aprovação |
-| `referencias` | Referências profissionais com validação por SMS/WhatsApp |
-| `regioes` | Regiões de atendimento por cidade/bairro/faixa de CEP |
-| `regioes_atuacao` | N:N — regiões em que cada profissional atende |
-| `categorias_servico` | Tipos de serviço (Padrão, Pesada, Pós-Obra, etc.) |
-| `categorias_profissional` | N:N — categorias em que cada profissional atua |
-| `opcionais` | Add-ons disponíveis (geladeira, tapetes, etc.) com valor e tempo extras |
-| `tabela_precos` | Preço por hora por categoria × região, com acréscimos e descontos |
-| `enderecos` | Endereços do cliente com lat/lon e características do imóvel |
-| `disponibilidades` | Agenda de disponibilidade da profissional (dia da semana + horário) |
-| `solicitacoes` | Pedido de serviço feito pelo cliente (antes de ser atribuído) |
-| `solicitacao_opcionais` | N:N — add-ons escolhidos em cada solicitação |
-| `recorrencias` | Controle de serviços recorrentes (semanal, quinzenal, 2x/semana) |
-| `servicos` | Execução efetiva — criado quando profissional aceita, com check-in/out |
-| `historico_status` | Auditoria de todas as mudanças de status dos serviços |
-| `avaliacoes_cliente` | Avaliação do cliente sobre a profissional (pública, critérios: pontualidade, qualidade, educação) |
-| `avaliacoes_profissional` | Avaliação da profissional sobre o cliente (interna, critérios: ambiente, materiais, respeito) |
-| `dados_bancarios` | Dados bancários e chave Pix da profissional |
-| `transacoes` | Registro financeiro — no MVP apenas referência; estruturado para gateway futuro |
-| `notificacoes` | Fila de notificações por canal (PUSH, EMAIL, SMS, IN_APP) |
+| **Etapa** | Etapa 1 — Autenticação e Usuários |
+| **Data de aplicação** | 2026-04-17 |
+| **Tabelas novas** | `usuarios` (inclui `token_recuperacao VARCHAR(64)` e `token_recuperacao_expira TIMESTAMPTZ`) |
+| **Enums novos** | `tipo_usuario` (CLIENTE, PROFISSIONAL, ADMIN) |
+| **Tabelas alteradas** | — (primeira migration) |
+| **Índices / triggers** | UNIQUE em `email` (B-tree automático); índice parcial `idx_usuarios_token_recuperacao WHERE token_recuperacao IS NOT NULL`; função `fn_set_atualizado_em()`; trigger `trg_usuarios_atualizado` |
+| **Espelhamento service ↔ banco** | `email UNIQUE` → AuthService normaliza (lower+trim) e `ValidarEmail` checa formato; `senha_hash` → bcrypt cost 12 após NIST 800-63b (8-72 chars); `tipo ENUM` → registro público só aceita CLIENTE/PROFISSIONAL; `token_recuperacao VARCHAR(64)` → `crypto/rand` 32 bytes hex + expiração checada antes do reset |
+| **Observações** | Extensões `uuid-ossp` e `unaccent` habilitadas aqui para servirem de base às migrations futuras. Não há índice redundante em `email` — o UNIQUE já cria B-tree. Índice parcial em token mantém custo próximo de zero (coluna é NULL na maioria das linhas). |
+
+#### V2 — `V2__cadastro_clientes_profissionais.sql`
+
+| Campo | Valor |
+|---|---|
+| **Etapa** | Etapa 2 — Cadastro de Clientes e Profissionais |
+| **Data de aplicação** | 2026-04-17 |
+| **Tabelas novas** | `clientes`, `profissionais`, `enderecos`, `documentos`, `referencias`, `regioes`, `regioes_atuacao`, `disponibilidades` |
+| **Enums novos** | `status_profissional`, `status_documento`, `status_referencia`, `tipo_documento` |
+| **Tabelas alteradas** | — (nenhuma tabela da V1 sofreu alteração) |
+| **Índices / triggers** | FK indexes: `idx_enderecos_cliente`, `idx_documentos_profissional`, `idx_referencias_profissional`, `idx_disponibilidades_profissional`, `idx_regioes_atuacao_regiao`; índice de matching `idx_profissionais_status`; UNIQUE parcial `ux_enderecos_cliente_principal` (1 principal por cliente); UNIQUE `uq_disponibilidades_prof_dia_inicio_fim`; UNIQUE `uq_regioes_nome_cidade_estado`; triggers `atualizado_em` em 6 tabelas |
+| **CHECKs (defesa em profundidade)** | `cpf ~ '^[0-9]{11}$'`, `cep ~ '^[0-9]{8}$'`, `score 0..100`, `nota_media NULL OR 1.0..5.0`, `total_servicos >= 0`, `num_quartos/banheiros/salas/cozinhas >= 0`, `area_m2 IS NULL OR > 0`, `dia_semana 0..6`, `hora_fim > hora_inicio`, `cep_fim >= cep_inicio`, `analisado_por NULL OR status <> 'PENDENTE'` |
+| **Espelhamento service ↔ banco** | Cada CHECK/UNIQUE tem validador correspondente em `domain/*.go` (`ValidarCPF`, `ValidarCEP`, `ValidarScore`, `ValidarNotaMedia`, `ValidarTotalServicos`, `ValidarComodos`, `ValidarAreaM2`, `ValidarFaixaCEP`, `ValidarEstado`, `ValidarHora`) aplicado em ClienteService/EnderecoService/CredenciamentoService antes do INSERT/UPDATE |
+| **Observações** | `documentos.analisado_por` fica como UUID **sem FK** neste momento — a FK para `admins.id` é adicionada apenas na V10. Não há índice redundante em `(email)`/`(clientes.cpf)`/`(profissionais.cpf)` — UNIQUE já cria B-tree. |
+
+**Diferença V2 vs. V1:** V1 estabelece a autenticação; V2 adiciona **todas** as entidades de perfil e cadastro que dependem de `usuarios`. Nenhuma coluna ou enum da V1 foi modificado.
 
 ### View de Controle Legal
 
@@ -736,103 +797,175 @@ GROUP BY s.profissional_id, sol.endereco_id, sol.cliente_id, DATE_TRUNC('week', 
 
 ---
 
-## 18. Stack e Estrutura do Projeto
+## 18. Rodar o Projeto
 
-**Stack Backend:** Go · chi · PostgreSQL · Flyway · pgAdmin · Git · Swagger (swaggo/swag)
-**Stack Frontend:** SvelteKit 5 · TypeScript · Vite
+Três caminhos, do mais simples ao mais completo. Escolha conforme o que você quer fazer hoje.
 
-```
-diarygo/
-├── backend/
-│   ├── cmd/api/            # main.go — entrypoint do servidor HTTP
-│   ├── internal/
-│   │   ├── domain/         # Entidades, interfaces de repository e regras de negócio
-│   │   ├── handler/        # Handlers HTTP (chi) com anotações swaggo
-│   │   ├── service/        # Use cases / lógica de aplicação
-│   │   ├── repository/
-│   │   │   ├── memory/     # Implementações in-memory (desenvolvimento e testes unitários)
-│   │   │   └── postgres/   # Implementações PostgreSQL (produção)
-│   │   └── middleware/     # Auth JWT, logging, etc.
-│   ├── pkg/                # Código reutilizável e exportável
-│   ├── migrations/         # Scripts SQL do Flyway (V1__*, V2__*, etc.)
-│   ├── config/             # Configurações e env
-│   └── go.mod
-├── frontend/
-│   ├── src/
-│   │   ├── lib/
-│   │   │   ├── api/        # Cliente HTTP (fetch wrapper)
-│   │   │   ├── components/ # Componentes Svelte reutilizáveis
-│   │   │   ├── stores/     # Estado global (auth, toasts)
-│   │   │   └── types/      # Tipos TypeScript
-│   │   ├── routes/         # Páginas SvelteKit (file-based routing)
-│   │   └── app.css         # Design system global
-│   ├── package.json
-│   └── svelte.config.js
-├── docs/swagger/           # Gerado pelo swag init — não editar manualmente
-├── docker-compose.yml      # PostgreSQL + pgAdmin + Flyway
-├── PLANO.md                # Plano de implementação por etapas
-└── README.md
+### 18.1 Pré-requisitos
+
+| Ferramenta | Versão mínima | Para quê | Verificar |
+|---|---|---|---|
+| **Go** | 1.25+ | Backend | `go version` |
+| **Node.js** | 20 LTS | Frontend | `node -v` |
+| **npm** | 10+ | Frontend | `npm -v` |
+| **Git** | qualquer | Clonar repo | `git --version` |
+| **Docker Desktop** | 4+ | Banco real e testes de integração | `docker --version` |
+
+Docker só é obrigatório se você quiser rodar **PostgreSQL** ou **testes de integração**. Para desenvolvimento normal nas Etapas 0–11, basta Go e Node.
+
+### 18.2 Caminho A — Stack Completa (recomendado para desenvolvimento)
+
+Dois terminais. Persistência em memória — não precisa de Docker.
+
+```bash
+# Terminal 1 — Backend (API Go em http://localhost:8080)
+cd backend
+go run cmd/api/main.go
+
+# Terminal 2 — Frontend (SvelteKit em http://localhost:5173)
+cd frontend
+npm install         # só na primeira vez
+npm run dev
 ```
 
-### Como Rodar o Projeto
+Abra [http://localhost:5173](http://localhost:5173) e crie uma conta de teste.
 
-#### Backend
+> **Configuração opcional do backend:** as variáveis têm defaults seguros para `development`. Para customizar (JWT, porta, ambiente), crie `backend/config/app.env`:
+> ```
+> PORT=8080
+> JWT_SECRET=segredo-com-no-minimo-32-caracteres-aqui
+> JWT_EXPIRATION_MINUTES=15
+> ENV=development
+> ```
+
+### 18.3 Caminho B — Só Backend (explorar a API)
+
+```bash
+cd backend
+go run cmd/api/main.go
+```
+
+Abra o **Swagger UI** em [http://localhost:8080/swagger/index.html](http://localhost:8080/swagger/index.html) e teste qualquer endpoint direto do navegador. Ou faça requisições curl manualmente (veja [§21](#21-api--referência-de-rotas)).
+
+### 18.4 Caminho C — Stack Completa + PostgreSQL real (Etapa 12+)
+
+```bash
+# 1. Subir Postgres + pgAdmin + Flyway (aplica V1, V2 ao iniciar)
+docker compose up -d
+
+# 2. Conferir migrations aplicadas
+docker compose exec postgres psql -U diarygo -d diarygo -c '\dt'
+
+# 3. Subir backend + frontend (Caminho A)
+```
+
+| Serviço | URL | Credenciais |
+|---|---|---|
+| **Frontend** | [http://localhost:5173](http://localhost:5173) | criar conta |
+| **Backend API** | [http://localhost:8080](http://localhost:8080) | — |
+| **Swagger UI** | [http://localhost:8080/swagger/index.html](http://localhost:8080/swagger/index.html) | — |
+| **PostgreSQL** | `localhost:5432` | `diarygo / diarygo` |
+| **pgAdmin** | [http://localhost:5050](http://localhost:5050) | `admin@diarygo.com.br / admin` |
+
+### 18.5 Testes
 
 ```bash
 cd backend
 
-# Criar config/app.env (na primeira vez)
-cat > config/app.env << 'EOF'
-PORT=8080
-JWT_SECRET=segredo-com-no-minimo-32-caracteres-aqui
-JWT_EXPIRATION_MINUTES=15
-ENV=development
-EOF
+# Unit tests (sem Docker) — rápido, use no dia-a-dia
+go test ./...
 
-# Rodar o servidor
-go run cmd/api/main.go
+# Integração (sobe Postgres efêmero via testcontainers-go — requer Docker)
+go test -tags=integration ./...
+
+# Reutilizar container entre runs (salta ~3s de startup)
+export TESTCONTAINERS_REUSE_ENABLE=true
+go test -tags=integration ./...
 ```
 
-#### Frontend
+### 18.6 Qualidade de código (antes de commitar)
 
 ```bash
+# Backend
+cd backend
+gofmt -w .
+go vet ./...
+go test ./...
+
+# Frontend
 cd frontend
-
-# Instalar dependências (na primeira vez)
-npm install
-
-# Rodar em modo desenvolvimento
-npm run dev
+npm run check
+npm run lint
 ```
 
-#### Ambos simultaneamente (dois terminais)
+### 18.7 Troubleshooting
 
-```bash
-# Terminal 1 — Backend
-cd backend && go run cmd/api/main.go
-
-# Terminal 2 — Frontend
-cd frontend && npm run dev
-```
-
-**Links de acesso:**
-
-| Serviço | URL |
-|---|---|
-| Frontend | http://localhost:5173 |
-| Backend API | http://localhost:8080 |
-| Swagger UI | http://localhost:8080/swagger/index.html |
-| Health check | http://localhost:8080/health |
+| Sintoma | Causa provável | Solução |
+|---|---|---|
+| `JWT_SECRET fraco — use no minimo 32 caracteres` (warn) | Rodando sem `app.env` | Ignorar em dev, ou criar `config/app.env` (§18.2) |
+| `bind: address already in use` | Porta 8080 ocupada | `lsof -i:8080` e matar processo; ou `PORT=8081 go run cmd/api/main.go` |
+| Frontend mostra erro de CORS | Backend não está de pé | Subir o backend (Caminho A, terminal 1) |
+| `npm install` falha | Node < 20 | Atualizar Node (`nvm install 20 && nvm use 20`) |
+| `docker compose up` — Flyway não aplica V2 | Migrations anteriores em estado sujo | `docker compose down -v && docker compose up -d` (volume zerado) |
+| Testes de integração travam em "pulling image" | Imagem ainda baixando | Esperar; roda uma única vez. `docker pull postgres:14-alpine` para adiantar |
+| `TESTCONTAINERS_REUSE_ENABLE=true` mas cada run sobe novo container | Docker Desktop sem "Reuse" configurado | Verificar que o Docker não é rootless sem Ryuk |
 
 ---
 
-## 19. Frontend — Documentação das Páginas
+## 19. Stack e Estrutura do Projeto
 
-> **Nota:** Esta seção é atualizada automaticamente sempre que há alterações no frontend.
+**Stack Backend:** Go 1.25 · chi · PostgreSQL 14 · Flyway · pgx · bcrypt · JWT (golang-jwt) · Swagger (swaggo) · testcontainers-go · golang-migrate
+
+**Stack Frontend:** SvelteKit 5 · Svelte 5 (runes + snippets) · TypeScript · Vite
+
+```
+diarygo/
+├── backend/
+│   ├── cmd/api/             # main.go — entrypoint HTTP (chi + middlewares + DI)
+│   ├── internal/
+│   │   ├── domain/          # Entidades + interfaces de repository + validadores de domínio
+│   │   ├── handler/         # Handlers HTTP (chi) com anotações swaggo
+│   │   ├── service/         # Use cases / lógica de aplicação (primeira linha de defesa)
+│   │   ├── repository/
+│   │   │   ├── memory/      # Implementações in-memory (Etapas 0-11, unit tests)
+│   │   │   └── postgres/    # Implementações pgx (Etapa 12+, integration tests)
+│   │   ├── middleware/      # JWT, RequererTipo, rate limiting, logging
+│   │   ├── config/          # Carregamento de env vars (JWT_SECRET, PORT, ENV)
+│   │   └── testutil/        # Bootstrap testcontainers + factories (build tag integration)
+│   │       └── factories/   # Builders com defaults válidos + functional options
+│   ├── migrations/          # V1__*.sql, V2__*.sql — consumidas por Flyway E golang-migrate
+│   ├── config/app.env       # Config local (não commitado)
+│   └── go.mod
+├── frontend/
+│   ├── src/
+│   │   ├── lib/
+│   │   │   ├── api/         # Cliente HTTP tipado (fetch wrapper)
+│   │   │   ├── components/  # Navbar, Toast, Footer
+│   │   │   ├── stores/      # auth (JWT), toasts
+│   │   │   └── types/       # DTOs espelhando o backend
+│   │   ├── routes/          # Páginas SvelteKit (file-based routing)
+│   │   └── app.css          # Design system global
+│   └── package.json
+├── docs/
+│   ├── swagger/             # Gerado via `swag init` — não editar manualmente
+│   ├── comandos.md          # Todos os comandos úteis (Go, npm, docker, flyway)
+│   ├── banco-dados.md       # Estratégia, migrations, pgAdmin, reset
+│   ├── estrutura.md         # Árvore anotada do projeto
+│   ├── regras-negocio.md    # Regras críticas (LC 150, cancelamento, score)
+│   └── schema-futuro.sql    # DDL das Etapas 3-11 (referência, não aplicado)
+├── docker-compose.yml       # PostgreSQL + pgAdmin + Flyway (mapeia ./backend/migrations)
+├── CLAUDE.md                # Instruções para o Claude (convenções, qualidade, segurança)
+├── PLANO.md                 # Plano de implementação por etapas (0-13)
+└── README.md                # Este arquivo
+```
+
+---
+
+## 20. Frontend — Páginas e Rotas
 
 **Design system:** inspirado no [Resend](https://resend.com) — fundo preto `#000000`, frost borders `rgba(214,235,253,0.19)`, tipografia Inter, paleta de acentos (orange, green, blue, yellow, red), botões pill `border-radius: 9999px`.
 
-### Páginas Disponíveis
+### 20.1 Páginas
 
 | Rota | Página | Acesso | Descrição |
 |---|---|---|---|
@@ -840,40 +973,98 @@ cd frontend && npm run dev
 | [`/login`](http://localhost:5173/login) | Login | Público | Autenticação com email e senha |
 | [`/registro`](http://localhost:5173/registro) | Registro Cliente | Público | Criação de conta tipo CLIENTE com medidor de força de senha |
 | [`/registro/profissional`](http://localhost:5173/registro/profissional) | Registro Diarista | Público | Criação de conta tipo PROFISSIONAL com requisitos de documentação |
-| [`/dashboard`](http://localhost:5173/dashboard) | Dashboard | Autenticado | Painel adaptado por tipo: CLIENTE / PROFISSIONAL / ADMIN |
 | [`/recuperar-senha`](http://localhost:5173/recuperar-senha) | Recuperar Senha | Público | Solicita token de recuperação (token exibido em dev) |
-| [`/redefinir-senha`](http://localhost:5173/redefinir-senha) | Redefinir Senha | Público | Redefine senha com token válido (aceita token via query string `?token=`) |
+| [`/redefinir-senha`](http://localhost:5173/redefinir-senha) | Redefinir Senha | Público | Redefine senha com token válido (aceita `?token=` na query string) |
+| [`/dashboard`](http://localhost:5173/dashboard) | Dashboard | JWT | Painel adaptado ao tipo: CLIENTE / PROFISSIONAL / ADMIN |
+| [`/dashboard/perfil`](http://localhost:5173/dashboard/perfil) | Perfil | JWT | Dados pessoais (nome, CPF, telefone) |
+| [`/dashboard/enderecos`](http://localhost:5173/dashboard/enderecos) | Endereços | JWT / CLIENTE | CRUD de endereços com definição de principal |
+| [`/dashboard/documentos`](http://localhost:5173/dashboard/documentos) | Documentos | JWT / PROFISSIONAL | Upload e acompanhamento de análise |
+| [`/dashboard/referencias`](http://localhost:5173/dashboard/referencias) | Referências | JWT / PROFISSIONAL | Cadastro de contatos de referência |
+| [`/dashboard/regioes`](http://localhost:5173/dashboard/regioes) | Regiões | JWT / PROFISSIONAL | Seleção de regiões de atuação |
+| [`/dashboard/disponibilidade`](http://localhost:5173/dashboard/disponibilidade) | Disponibilidade | JWT / PROFISSIONAL | Grade semanal de horários |
 
-### API — Rotas Backend
+### 20.2 Componentes e Stores
 
-| Método | Rota | Autenticação | Descrição |
+| Item | Tipo | Localização | Descrição |
 |---|---|---|---|
-| `GET` | [`/health`](http://localhost:8080/health) | — | Health check |
-| `POST` | `/api/v1/auth/registro/cliente` | — | Registrar cliente |
-| `POST` | `/api/v1/auth/registro/profissional` | — | Registrar diarista |
-| `POST` | `/api/v1/auth/login` | — | Login → retorna JWT |
-| `POST` | `/api/v1/auth/solicitar-recuperacao-senha` | — | Solicitar token de recuperação |
-| `POST` | `/api/v1/auth/redefinir-senha` | — | Redefinir senha com token |
-| `GET` | [`/api/v1/me`](http://localhost:8080/api/v1/me) | Bearer JWT | Retorna payload do token |
-| `GET` | [`/swagger/index.html`](http://localhost:8080/swagger/index.html) | — | Documentação Swagger UI |
-
-### Componentes Globais
-
-| Componente | Localização | Descrição |
-|---|---|---|
-| `Navbar` | `src/lib/components/Navbar.svelte` | Barra de navegação responsiva com links por tipo de usuário |
-| `Toast` | `src/lib/components/Toast.svelte` | Notificação flutuante (success/error/info) com auto-dismiss |
-| `ToastContainer` | `src/lib/components/ToastContainer.svelte` | Gerencia a fila de toasts |
-
-### Stores
-
-| Store | Arquivo | Descrição |
-|---|---|---|
-| `auth` | `src/lib/stores/auth.ts` | Token JWT, payload, persistência em localStorage |
-| `isAuthenticated` | derivado de `auth` | Boolean reativo |
-| `currentUser` | derivado de `auth` | Payload do token (email, tipo, sub) |
-| `toasts` | `src/lib/stores/toasts.ts` | Fila de notificações globais |
+| `Navbar` | Componente | [`src/lib/components/Navbar.svelte`](frontend/src/lib/components/Navbar.svelte) | Navegação responsiva com links por tipo de usuário |
+| `Toast` | Componente | [`src/lib/components/Toast.svelte`](frontend/src/lib/components/Toast.svelte) | Notificação flutuante (success/error/info) com auto-dismiss |
+| `ToastContainer` | Componente | [`src/lib/components/ToastContainer.svelte`](frontend/src/lib/components/ToastContainer.svelte) | Gerencia a fila de toasts |
+| `Footer` | Componente | [`src/lib/components/Footer.svelte`](frontend/src/lib/components/Footer.svelte) | Rodapé da aplicação |
+| `auth` | Store | [`src/lib/stores/auth.ts`](frontend/src/lib/stores/auth.ts) | Token JWT + payload, persistido em localStorage |
+| `isAuthenticated` | Derived | derivado de `auth` | Boolean reativo para guards de rota |
+| `currentUser` | Derived | derivado de `auth` | Payload do token (email, tipo, sub) |
+| `toasts` | Store | [`src/lib/stores/toasts.ts`](frontend/src/lib/stores/toasts.ts) | Fila de notificações globais |
 
 ---
 
-*Documento atualizado em 12/abril/2026. Modelo intermediado, MVP sem pagamento online, arquitetura preparada para evolução gradual.*
+## 21. API — Referência de Rotas
+
+> Todas as rotas protegidas exigem header `Authorization: Bearer <jwt>`. Documentação interativa completa no [Swagger UI](http://localhost:8080/swagger/index.html).
+
+### 21.1 Públicas (sem autenticação)
+
+| Método | Rota | Descrição |
+|---|---|---|
+| `GET` | `/health` | Health check (`{"status":"ok","service":"diarygo"}`) |
+| `POST` | `/api/v1/auth/registro/cliente` | Criar conta tipo CLIENTE (rate-limited) |
+| `POST` | `/api/v1/auth/registro/profissional` | Criar conta tipo PROFISSIONAL (rate-limited) |
+| `POST` | `/api/v1/auth/login` | Login → retorna JWT (rate-limited) |
+| `POST` | `/api/v1/auth/solicitar-recuperacao-senha` | Solicitar token de recuperação (rate-limited) |
+| `POST` | `/api/v1/auth/redefinir-senha` | Redefinir senha com token (rate-limited) |
+| `GET` | `/api/v1/regioes` | Listar regiões ativas do sistema |
+
+### 21.2 Autenticadas (qualquer tipo)
+
+| Método | Rota | Descrição |
+|---|---|---|
+| `GET` | `/api/v1/me` | Retorna payload do JWT (útil para debug) |
+
+### 21.3 Cliente (JWT + tipo CLIENTE)
+
+| Método | Rota | Descrição |
+|---|---|---|
+| `GET` | `/api/v1/clientes/me` | Buscar perfil do cliente autenticado |
+| `POST` | `/api/v1/clientes/me` | Criar perfil de cliente |
+| `PUT` | `/api/v1/clientes/me` | Atualizar nome e telefone (CPF imutável) |
+| `GET` | `/api/v1/clientes/me/enderecos` | Listar endereços (principal primeiro) |
+| `POST` | `/api/v1/clientes/me/enderecos` | Criar endereço |
+| `PUT` | `/api/v1/clientes/me/enderecos/{id}` | Atualizar endereço |
+| `DELETE` | `/api/v1/clientes/me/enderecos/{id}` | Remover endereço |
+| `PUT` | `/api/v1/clientes/me/enderecos/{id}/principal` | Definir como principal |
+
+### 21.4 Profissional (JWT + tipo PROFISSIONAL)
+
+| Método | Rota | Descrição |
+|---|---|---|
+| `GET` | `/api/v1/profissionais/me` | Buscar perfil da profissional |
+| `POST` | `/api/v1/profissionais/me` | Criar perfil (status inicial: PENDENTE) |
+| `PUT` | `/api/v1/profissionais/me` | Atualizar nome/telefone/foto/MEI |
+| `POST` | `/api/v1/profissionais/me/documentos` | Enviar documento para análise |
+| `GET` | `/api/v1/profissionais/me/documentos` | Listar documentos enviados |
+| `POST` | `/api/v1/profissionais/me/referencias` | Adicionar referência profissional |
+| `GET` | `/api/v1/profissionais/me/referencias` | Listar referências |
+| `PUT` | `/api/v1/profissionais/me/regioes` | Definir regiões de atuação (substitui todas) |
+| `GET` | `/api/v1/profissionais/me/regioes` | Listar regiões da profissional |
+| `PUT` | `/api/v1/profissionais/me/disponibilidades` | Definir grade semanal (substitui tudo) |
+| `GET` | `/api/v1/profissionais/me/disponibilidades` | Listar slots de disponibilidade |
+
+**Rate limiting:** rotas `/auth/*` limitadas a **10 req/min por IP** em produção (200 req/min em dev/test para não atrapalhar testes). Cobertura OWASP A06.
+
+---
+
+## 22. Documentação Auxiliar
+
+| Arquivo | Quando consultar |
+|---|---|
+| [CLAUDE.md](CLAUDE.md) | Convenções obrigatórias, qualidade, segurança OWASP, Git flow |
+| [PLANO.md](PLANO.md) | Status da implementação por etapa (0–13) e próximos passos |
+| [docs/comandos.md](docs/comandos.md) | Todos os comandos Go, npm, docker, flyway, testes |
+| [docs/banco-dados.md](docs/banco-dados.md) | Estratégia de persistência, migrations, pgAdmin, reset |
+| [docs/estrutura.md](docs/estrutura.md) | Árvore anotada do projeto com responsabilidade de cada pasta |
+| [docs/regras-negocio.md](docs/regras-negocio.md) | Regras críticas (LC 150/2015, cancelamento, score, avaliação) |
+| [docs/schema-futuro.sql](docs/schema-futuro.sql) | DDL das Etapas 3–11 para referência (ainda não migrado) |
+
+---
+
+*Documento atualizado em 17/abril/2026. Modelo intermediado, MVP sem pagamento online, arquitetura preparada para evolução gradual.*

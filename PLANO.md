@@ -838,7 +838,7 @@ O codigo das Etapas 0-1 define os padroes que todas as etapas seguintes devem re
 **Objetivo:** substituir todas as implementacoes in-memory por implementacoes Postgres. Services e handlers nao mudam. Frontend nao muda — a troca e transparente.
 
 ### Backend — Infraestrutura
-- [ ] Subir infraestrutura: `docker-compose up -d` -> PostgreSQL + pgAdmin + Flyway aplicando `V1__schema_inicial.sql`
+- [ ] Subir infraestrutura: `docker-compose up -d` -> PostgreSQL + pgAdmin + Flyway aplicando as migrations versionadas (`V1__auth_usuarios.sql`, `V2__cadastro_clientes_profissionais.sql`, V3…V11 conforme etapas concluidas)
 - [ ] Adicionar dependencia `pgx/v5` ao `go.mod`
 - [ ] Criar `internal/repository/postgres/db.go` — pool de conexoes com `pgxpool`, health check, graceful shutdown
 
@@ -874,12 +874,13 @@ Para cada repository in-memory, criar o equivalente em `internal/repository/post
 
 ## Etapa 13 — Testes de Integracao, Qualidade e Documentacao da API
 
-**Objetivo:** cobertura de testes com banco real, API documentada e revisao final de qualidade.
+**Objetivo:** fechar lacunas de cobertura, rodar revisao final de qualidade e deixar a API documentada. Desde as Etapas 1-12 cada migration e repository Postgres ganha testes de integracao proprios (via `backend/internal/testutil` + testcontainers-go); esta etapa consolida o que ficou pendente, nao cria a infraestrutura do zero.
 
-### Backend — Testes de Integracao
-- [ ] Testes de integracao para todos os repositories Postgres (banco real, sem mocks)
+### Backend — Testes de Integracao (consolidacao)
+- [ ] Preencher lacunas de cobertura nos repositories Postgres (comparar com a matriz de services — qualquer repo sem `*_test.go` com tag `integration` entra aqui)
 - [ ] Confirmar que testes unitarios dos services (in-memory) continuam verdes
 - [ ] Testes end-to-end dos fluxos principais: registro -> login -> completar perfil -> solicitar -> matching -> execucao -> avaliacao
+- [ ] Verificar que `TESTCONTAINERS_REUSE_ENABLE=true` acelera runs locais sem causar flakes
 
 ### Backend — Qualidade
 - [ ] `go vet ./...` sem alertas

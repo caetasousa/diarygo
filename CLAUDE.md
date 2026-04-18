@@ -131,12 +131,30 @@ Checklist minimo por etapa — **frontend**:
 5. Atribuicao por avaliacao + proximidade geografica
 6. Profissional tem 30 min para aceitar; apos, redireciona
 
+## Migrations (uma por etapa)
+
+**REGRA OBRIGATORIA:** cada etapa do PLANO.md que introduza, altere ou remova tabelas cria UMA migration Flyway em `backend/migrations/V{N}__{nome_etapa_snake}.sql`. Nao consolidar schema em uma migration final — a divisao por etapa isola risco, deixa rastreavel o que cada entrega alterou e facilita testes de integracao.
+
+- Formato do nome: `V{N}__{nome_etapa_snake}.sql` (ex: `V3__catalogo_precificacao.sql`).
+- **Nunca editar** migration ja aplicada em `developer`/`master`. Correcoes viram nova migration (`V{N+1}__fix_xxx.sql`).
+- Ordem canonica dentro do arquivo: extensoes → enums → tabelas (FKs resolvidas) → indices → triggers → views.
+- **Cabecalho obrigatorio** no topo do arquivo SQL (bloco de comentario):
+  - `Etapa: N — Nome da etapa`
+  - Resumo (1-2 linhas) do que a migration faz
+  - Delta vs. migrations anteriores: tabelas novas/alteradas, enums, indices, triggers
+  - Rollback equivalente (para reset em dev — producao nunca roda rollback)
+- **Ao abrir PR de feature** atualizar em conjunto: (a) migration SQL, (b) `README.md` secoes "Esquema do Banco" e "Historico de Migrations", (c) domain Go, (d) factories em `backend/internal/testutil/factories/`, (e) `AllTables` em `backend/internal/testutil/truncate.go` se houver nova tabela.
+- Schema planejado das Etapas 3-11 (ainda nao migrado) vive em `docs/schema-futuro.sql` como referencia. Ao implementar uma etapa, extrair o bloco correspondente e criar a V{N} definitiva.
+
 ## Testes
 
-- Testes unitarios dos services: usam repositories in-memory, sem banco, sem Docker
-- Testes de integracao dos repositories postgres: usam banco real (Etapa 13+)
-- Nunca usar mocks para PostgreSQL — usar implementacao in-memory ou banco real
-- Nomenclatura: `TestMetodo_Cenario_Resultado`
+- **Unitarios (services):** usam repositories in-memory, sem banco, sem Docker. Rodam com `go test ./...`.
+- **Integracao (repositories postgres, handlers end-to-end):** usam banco real via testcontainers-go. Arquivos protegidos pela build tag `//go:build integration`. Rodam com `go test -tags=integration ./...`.
+- **Ciclo de vida otimizado:** um container Postgres por pacote de testes (via `TestMain` + `testutil.StartPostgres`), migrations aplicadas uma unica vez, `testutil.Truncate` entre testes para limpar dados mantendo schema. Nao derrubar o container entre testes — so no fim da suite.
+- **Factories:** sempre popular dados via `backend/internal/testutil/factories/` (builders com defaults validos + functional options). Nao replicar `INSERT` ad-hoc dentro dos testes.
+- Nunca usar mocks para PostgreSQL — usar implementacao in-memory (unit) ou banco real (integracao).
+- Reuso de container entre runs locais: `TESTCONTAINERS_REUSE_ENABLE=true` salta o startup de ~3s em iteracoes sucessivas.
+- Nomenclatura: `TestMetodo_Cenario_Resultado`.
 
 ## Comandos Rapidos
 
@@ -144,11 +162,12 @@ Checklist minimo por etapa — **frontend**:
 # Backend
 cd backend
 go run cmd/api/main.go                    # rodar (sem banco nas Etapas 0-11)
-go test ./...                             # testar
+go test ./...                             # unit tests (sem Docker)
+go test -tags=integration ./...           # unit + integracao (sobe Postgres via testcontainers)
 gofmt -w .                                # formatar
 go vet ./...                              # verificar
 swag init -g cmd/api/main.go -o ../docs/swagger  # gerar Swagger
-docker-compose up -d                      # infra (Etapa 12+)
+docker-compose up -d                      # infra local (Postgres + pgAdmin + Flyway)
 
 # Frontend
 cd frontend
