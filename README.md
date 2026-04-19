@@ -720,17 +720,18 @@ A coluna **Migration** indica qual migration introduziu a tabela. Entradas marca
 | `regioes` | V2 | Regiões de atendimento por cidade/bairro/faixa de CEP |
 | `regioes_atuacao` | V2 | N:N — regiões em que cada profissional atende |
 | `disponibilidades` | V2 | Agenda de disponibilidade da profissional (dia da semana + horário) |
-| `categorias_servico` | V3 (futura) | Tipos de serviço (Padrão, Pesada, Pós-Obra, etc.) |
-| `categorias_profissional` | V3 (futura) | N:N — categorias em que cada profissional atua |
-| `opcionais` | V3 (futura) | Add-ons disponíveis (geladeira, tapetes, etc.) com valor e tempo extras |
-| `tabela_precos` | V3 (futura) | Preço por hora por categoria × região, com acréscimos e descontos |
-| `solicitacoes` | V4 (futura) | Pedido de serviço feito pelo cliente (antes de ser atribuído) |
-| `solicitacao_opcionais` | V4 (futura) | N:N — add-ons escolhidos em cada solicitação |
-| `servicos` | V5 (futura) | Execução efetiva — criado quando profissional aceita, com check-in/out |
-| `historico_status` | V5 (futura) | Auditoria de todas as mudanças de status dos serviços |
-| `avaliacoes_cliente` | V6 (futura) | Avaliação do cliente sobre a profissional (pública: pontualidade, qualidade, educação) |
-| `avaliacoes_profissional` | V6 (futura) | Avaliação da profissional sobre o cliente (interna: ambiente, materiais, respeito) |
-| `recorrencias` | V7 (futura) | Controle de serviços recorrentes (semanal, quinzenal, 2x/semana) |
+| `cliente_profissional_preferencia` | V3 | Favoritas e bloqueios do cliente (diferencial B — discriminador `tipo`) |
+| `categorias_servico` | V4 | Tipos de serviço (Padrão, Pesada, Pós-Obra, etc.) |
+| `categorias_profissional` | V4 | N:N — categorias em que cada profissional atua |
+| `opcionais` | V4 | Add-ons disponíveis (geladeira, tapetes, etc.) com valor e tempo extras |
+| `tabela_precos` | V4 | Preço por hora por categoria × região, com acréscimos e descontos |
+| `solicitacoes` | V5 (futura) | Pedido de serviço feito pelo cliente (antes de ser atribuído) |
+| `solicitacao_opcionais` | V5 (futura) | N:N — add-ons escolhidos em cada solicitação |
+| `servicos` | V6 (futura) | Execução efetiva — criado quando profissional aceita, com check-in/out |
+| `historico_status` | V6 (futura) | Auditoria de todas as mudanças de status dos serviços |
+| `avaliacoes_cliente` | V7 (futura) | Avaliação do cliente sobre a profissional (pública: pontualidade, qualidade, educação) |
+| `avaliacoes_profissional` | V7 (futura) | Avaliação da profissional sobre o cliente (interna: ambiente, materiais, respeito) |
+| `recorrencias` | V8 (futura) | Controle de serviços recorrentes (semanal, quinzenal, 2x/semana) |
 | `notificacoes` | V9 (futura) | Fila de notificações por canal (PUSH, EMAIL, SMS, IN_APP) |
 | `admins` | V10 (futura) | Administradores com permissões em JSONB |
 | `transacoes` | V11 (futura) | Registro financeiro — no MVP apenas referência; estruturado para gateway futuro |
@@ -770,6 +771,37 @@ Cada etapa do [PLANO.md](PLANO.md) que introduz, altera ou remove tabelas gera *
 | **Observações** | `documentos.analisado_por` fica como UUID **sem FK** neste momento — a FK para `admins.id` é adicionada apenas na V10. Não há índice redundante em `(email)`/`(clientes.cpf)`/`(profissionais.cpf)` — UNIQUE já cria B-tree. |
 
 **Diferença V2 vs. V1:** V1 estabelece a autenticação; V2 adiciona **todas** as entidades de perfil e cadastro que dependem de `usuarios`. Nenhuma coluna ou enum da V1 foi modificado.
+
+#### V3 — `V3__preferencias_cliente.sql`
+
+| Campo | Valor |
+|---|---|
+| **Etapa** | Etapa 3 (diferencial B) — Favoritas e Bloqueios |
+| **Data de aplicação** | 2026-04-18 |
+| **Tabelas novas** | `cliente_profissional_preferencia` |
+| **Enums novos** | `tipo_preferencia` (FAVORITA, BLOQUEADA) |
+| **Tabelas alteradas** | — |
+| **Índices / triggers** | `idx_pref_cliente_tipo`, `idx_pref_profissional`; UNIQUE `(cliente_id, profissional_id)`; trigger `trg_pref_atualizado` reutiliza `fn_set_atualizado_em()` da V2 |
+| **Espelhamento service ↔ banco** | `tipo ENUM` → `domain.TipoPreferencia.Valida()`; UNIQUE `(cliente_id, profissional_id)` → `PreferenciaService.Upsert` (preserva ID original e só muda `tipo`, garantindo que favoritar → bloquear substitui sem duplicar); FK `ON DELETE CASCADE` → service valida existência antes |
+| **Observações** | Tabela única com discriminador `tipo` em vez de duas tabelas (`favoritas` + `bloqueios`). Ganho: uma única operação upsert garante exclusividade mútua (um cliente não favorita e bloqueia a mesma profissional ao mesmo tempo) sem precisar de transação. |
+
+**Diferença V3 vs. V2:** V3 acrescenta uma tabela N:N entre `clientes` e `profissionais` para o diferencial competitivo B. Nenhuma tabela da V1/V2 foi alterada.
+
+#### V4 — `V4__catalogo_precificacao.sql`
+
+| Campo | Valor |
+|---|---|
+| **Etapa** | Etapa 3 — Catálogo, Opcionais e Tabela de Preços (diferencial C) |
+| **Data de aplicação** | 2026-04-18 |
+| **Tabelas novas** | `categorias_servico`, `categorias_profissional`, `opcionais`, `tabela_precos` |
+| **Enums novos** | — |
+| **Tabelas alteradas** | — |
+| **Índices / triggers** | `idx_cat_prof_categoria`, `idx_precos_categoria`, `idx_precos_regiao`; UNIQUE `categorias_servico.nome`, `opcionais.nome`, `(tabela_precos.categoria_id, regiao_id)`; triggers `trg_categorias_atualizado`, `trg_opcionais_atualizado`, `trg_tabela_precos_atualizado` reutilizam `fn_set_atualizado_em()` |
+| **CHECKs (defesa em profundidade)** | `duracao_minima_min > 0`, `valor_extra >= 0`, `tempo_extra_min >= 0`, `preco_hora > 0`, `acrescimo_fds / desconto_* 0..100` |
+| **Espelhamento service ↔ banco** | `PrecificacaoService.CalcularValorReferencia` consome `BuscarCategoriaPorID`, `BuscarTabelaPreco(categoria, regiao)` e `BuscarOpcionalPorID` — mesma chave composta da UNIQUE no banco. Constantes `TempoExtraPorQuarto/Banheiro/Sala/Cozinha` em [precificacao_service.go](backend/internal/service/precificacao_service.go) se somam à `duracao_minima_min` da categoria para compor o tempo total; o preço final é `preco_hora × horas + sum(opcionais.valor_extra)` com acréscimo FDS (se sáb/dom) e desconto por frequência aplicados em sequência |
+| **Observações** | O catálogo é **público** (sem JWT) em `GET /categorias`, `GET /categorias/:id/opcionais` e `POST /precos/calcular` — qualquer visitante pode simular um orçamento. O breakdown retornado em `itens[]` é enumerado (`BASE / COMODO / OPCIONAL / ACRESCIMO / DESCONTO / TOTAL`) para o frontend renderizar como recibo transparente. Em V4, 7 categorias × 12 regiões = 84 linhas de preço são seedadas via multiplicador regional (Centro 1.10, Setor Sul 1.15, etc.) no repository in-memory — o Postgres vai replicar esses valores como seed na Etapa 12. |
+
+**Diferença V4 vs. V3:** V4 introduz o vocabulário do serviço (categorias, opcionais) e seu preço por região. É **pré-requisito** para V5 (solicitações), que vai referenciar `categorias_servico.id` e `opcionais.id` via FK.
 
 ### View de Controle Legal
 

@@ -64,6 +64,8 @@ func main() {
 	regiaoRepo := memory.NewRegiaoRepository()
 	profRegiaoRepo := memory.NewProfissionalRegiaoRepository(regiaoRepo)
 	disponibilidadeRepo := memory.NewDisponibilidadeRepository()
+	preferenciaRepo := memory.NewPreferenciaRepository()
+	catalogoRepo := memory.NewCatalogoRepository(regiaoRepo)
 
 	// Services
 	authService := service.NewAuthService(usuarioRepo, cfg.JWTSecret, cfg.JWTExpiry, cfg.Env)
@@ -74,6 +76,8 @@ func main() {
 		profissionalRepo, documentoRepo, referenciaRepo,
 		regiaoRepo, profRegiaoRepo, disponibilidadeRepo,
 	)
+	preferenciaService := service.NewPreferenciaService(preferenciaRepo, clienteRepo, profissionalRepo)
+	precificacaoService := service.NewPrecificacaoService(catalogoRepo, regiaoRepo)
 
 	// Handlers
 	authHandler := handler.NewAuthHandler(authService)
@@ -81,6 +85,8 @@ func main() {
 	enderecoHandler := handler.NewEnderecoHandler(enderecoService)
 	profissionalHandler := handler.NewProfissionalHandler(profissionalService, credenciamentoService)
 	regiaoHandler := handler.NewRegiaoHandler(credenciamentoService)
+	preferenciaHandler := handler.NewPreferenciaHandler(preferenciaService)
+	catalogoHandler := handler.NewCatalogoHandler(precificacaoService)
 
 	r := chi.NewRouter()
 
@@ -118,6 +124,8 @@ func main() {
 
 		// Rotas publicas
 		r.Mount("/regioes", regiaoHandler.Routes())
+		r.Mount("/categorias", catalogoHandler.RoutesCategorias())
+		r.Mount("/precos", catalogoHandler.RoutesPrecos())
 
 		// Rotas protegidas — requerem JWT valido
 		r.Group(func(r chi.Router) {
@@ -138,6 +146,8 @@ func main() {
 				r.Use(mw.RequererTipo(domain.TipoCliente))
 				r.Mount("/clientes", clienteHandler.Routes())
 				r.Mount("/clientes/me/enderecos", enderecoHandler.Routes())
+				r.Mount("/clientes/me/favoritas", preferenciaHandler.RoutesFavoritas())
+				r.Mount("/clientes/me/bloqueios", preferenciaHandler.RoutesBloqueios())
 			})
 
 			// Rotas de profissional — apenas PROFISSIONAL

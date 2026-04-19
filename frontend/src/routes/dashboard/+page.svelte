@@ -1,5 +1,16 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { currentUser } from '$lib/stores/auth';
+	import { api } from '$lib/api/client';
+	import type {
+		ClienteResponse,
+		EnderecoResponse,
+		ProfissionalResponse,
+		DocumentoResponse,
+		ReferenciaResponse,
+		RegiaoResponse,
+		DisponibilidadeResponse
+	} from '$lib/types';
 	import {
 		Plus,
 		ArrowRight,
@@ -12,9 +23,7 @@
 		CircleCheck,
 		Circle,
 		MapPin,
-		FileText,
 		Users,
-		CalendarClock,
 		User as UserIcon,
 		Headset,
 		Zap,
@@ -26,7 +35,8 @@
 		Shirt,
 		ChevronRight,
 		ArrowUpRight,
-		CircleAlert
+		CircleAlert,
+		BadgeCheck
 	} from 'lucide-svelte';
 
 	const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -51,19 +61,25 @@
 		{ icon: Shirt, name: 'Passadoria', tag: '2h' }
 	];
 
-	const clienteChecklist = [
+	type ChecklistItem = {
+		href: string;
+		label: string;
+		sub: string;
+		done: boolean;
+		icon: typeof UserIcon;
+	};
+
+	let clienteChecklist = $state<ChecklistItem[]>([
 		{ href: '/dashboard/perfil', label: 'Complete seu perfil', sub: 'Nome, CPF e telefone', done: false, icon: UserIcon },
 		{ href: '/dashboard/enderecos', label: 'Adicione um endereço', sub: 'Onde o serviço será realizado', done: false, icon: MapPin },
 		{ href: '/solicitacoes/novo', label: 'Faça sua primeira solicitação', sub: 'Agende sua diarista', done: false, icon: Sparkles },
-	];
+	]);
 
-	const profissionalChecklist = [
+	let profissionalChecklist = $state<ChecklistItem[]>([
 		{ href: '/dashboard/perfil', label: 'Dados pessoais', sub: 'Nome, CPF, RG e foto', done: false, icon: UserIcon },
-		{ href: '/dashboard/documentos', label: 'Documentos', sub: 'RG, CPF e comprovante', done: false, icon: FileText },
-		{ href: '/dashboard/referencias', label: 'Referências profissionais', sub: 'Mínimo 2 contatos', done: false, icon: Users },
-		{ href: '/dashboard/regioes', label: 'Regiões de atuação', sub: 'Onde você atende', done: false, icon: MapPin },
-		{ href: '/dashboard/disponibilidade', label: 'Disponibilidade', sub: 'Dias e horários', done: false, icon: CalendarClock },
-	];
+		{ href: '/dashboard/credenciamento', label: 'Credenciamento', sub: 'Documentos e referências', done: false, icon: BadgeCheck },
+		{ href: '/dashboard/atuacao', label: 'Atuação', sub: 'Regiões e disponibilidade', done: false, icon: MapPin },
+	]);
 
 	const tips = [
 		{
@@ -93,6 +109,56 @@
 
 	let clienteProgress = $derived(clienteChecklist.filter(i => i.done).length);
 	let profissionalProgress = $derived(profissionalChecklist.filter(i => i.done).length);
+
+	function hasText(v: string | undefined | null): boolean {
+		return typeof v === 'string' && v.trim().length > 0;
+	}
+
+	async function carregarEstadoCliente() {
+		const [cliente, enderecos] = await Promise.all([
+			api.buscarPerfilCliente().catch(() => null as ClienteResponse | null),
+			api.listarEnderecos().catch(() => [] as EnderecoResponse[])
+		]);
+
+		const perfilOk =
+			!!cliente && hasText(cliente.nome) && hasText(cliente.cpf) && hasText(cliente.telefone);
+		const enderecoOk = enderecos.length > 0;
+
+		clienteChecklist[0].done = perfilOk;
+		clienteChecklist[1].done = enderecoOk;
+	}
+
+	async function carregarEstadoProfissional() {
+		const [profissional, documentos, referencias, regioes, disponibilidades] = await Promise.all([
+			api.buscarPerfilProfissional().catch(() => null as ProfissionalResponse | null),
+			api.listarDocumentos().catch(() => [] as DocumentoResponse[]),
+			api.listarReferencias().catch(() => [] as ReferenciaResponse[]),
+			api.listarRegioesAtuacao().catch(() => [] as RegiaoResponse[]),
+			api.listarDisponibilidades().catch(() => [] as DisponibilidadeResponse[])
+		]);
+
+		const perfilOk =
+			!!profissional &&
+			hasText(profissional.nome) &&
+			hasText(profissional.cpf) &&
+			hasText(profissional.rg) &&
+			hasText(profissional.telefone);
+		const credenciamentoOk = documentos.length > 0 && referencias.length >= 2;
+		const atuacaoOk = regioes.length > 0 && disponibilidades.length > 0;
+
+		profissionalChecklist[0].done = perfilOk;
+		profissionalChecklist[1].done = credenciamentoOk;
+		profissionalChecklist[2].done = atuacaoOk;
+	}
+
+	onMount(() => {
+		const tipoAtual = $currentUser?.tipo;
+		if (tipoAtual === 'CLIENTE') {
+			carregarEstadoCliente();
+		} else if (tipoAtual === 'PROFISSIONAL') {
+			carregarEstadoProfissional();
+		}
+	});
 
 	function formatDate(d: Date) {
 		return d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });

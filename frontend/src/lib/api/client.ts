@@ -21,7 +21,13 @@ import type {
 	RegiaoResponse,
 	DefinirRegioesRequest,
 	DefinirDisponibilidadesRequest,
-	DisponibilidadeResponse
+	DisponibilidadeResponse,
+	CategoriaResponse,
+	OpcionalResponse,
+	CalculoPrecoRequest,
+	CalculoPrecoResponse,
+	PreferenciaResponse,
+	TipoPreferencia
 } from '$lib/types';
 
 const BASE_URL = '/api/v1';
@@ -177,6 +183,46 @@ class ApiClient {
 	async listarDisponibilidades(): Promise<DisponibilidadeResponse[]> {
 		return this.request('GET', '/profissionais/me/disponibilidades');
 	}
+
+	// Catálogo (público)
+	async listarCategorias(): Promise<CategoriaResponse[]> {
+		return this.request('GET', '/categorias');
+	}
+
+	async listarOpcionais(categoriaID: string): Promise<OpcionalResponse[]> {
+		return this.request('GET', `/categorias/${categoriaID}/opcionais`);
+	}
+
+	async calcularPreco(req: CalculoPrecoRequest): Promise<CalculoPrecoResponse> {
+		return this.request('POST', '/precos/calcular', req);
+	}
+
+	// Preferências — cliente
+	async listarFavoritas(): Promise<PreferenciaResponse[]> {
+		return this.request('GET', '/clientes/me/favoritas');
+	}
+
+	async favoritarProfissional(profissionalID: string): Promise<PreferenciaResponse> {
+		return this.request('POST', `/clientes/me/favoritas/${profissionalID}`);
+	}
+
+	async removerFavorita(profissionalID: string): Promise<void> {
+		return this.request('DELETE', `/clientes/me/favoritas/${profissionalID}`);
+	}
+
+	async listarBloqueios(): Promise<PreferenciaResponse[]> {
+		return this.request('GET', '/clientes/me/bloqueios');
+	}
+
+	async bloquearProfissional(profissionalID: string): Promise<PreferenciaResponse> {
+		return this.request('POST', `/clientes/me/bloqueios/${profissionalID}`);
+	}
+
+	async removerBloqueio(profissionalID: string): Promise<void> {
+		return this.request('DELETE', `/clientes/me/bloqueios/${profissionalID}`);
+	}
 }
+// TipoPreferencia é re-exportado para módulos que só precisam do cliente.
+export type { TipoPreferencia };
 
 export const api = new ApiClient();

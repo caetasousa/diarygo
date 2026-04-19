@@ -15,60 +15,16 @@
 
 
 -- =============================================================================
--- Etapa 3 — Catálogo e Precificação
--- Virará V3__catalogo_precificacao.sql
--- Depende de: V2 (regioes, profissionais)
+-- Etapa 3 — Catálogo e Precificação — JÁ MIGRADO
 -- =============================================================================
-
--- enums necessários: (nenhum novo nesta etapa)
-
--- CREATE TABLE categorias_servico (
---     id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
---     nome                VARCHAR(255) NOT NULL UNIQUE,
---     descricao           TEXT,
---     duracao_minima_min  INTEGER NOT NULL,
---     ativa               BOOLEAN NOT NULL DEFAULT TRUE,
---     criado_em           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
---     atualizado_em       TIMESTAMPTZ NOT NULL DEFAULT NOW()
--- );
-
--- CREATE TABLE categorias_profissional (
---     profissional_id     UUID NOT NULL REFERENCES profissionais(id) ON DELETE CASCADE,
---     categoria_id        UUID NOT NULL REFERENCES categorias_servico(id) ON DELETE CASCADE,
---     PRIMARY KEY (profissional_id, categoria_id)
--- );
-
--- CREATE TABLE opcionais (
---     id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
---     nome                VARCHAR(255) NOT NULL UNIQUE,
---     descricao           TEXT,
---     valor_extra         NUMERIC(10,2) NOT NULL DEFAULT 0,
---     tempo_extra_min     INTEGER NOT NULL DEFAULT 0,
---     ativo               BOOLEAN NOT NULL DEFAULT TRUE,
---     criado_em           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
---     atualizado_em       TIMESTAMPTZ NOT NULL DEFAULT NOW()
--- );
-
--- CREATE TABLE tabela_precos (
---     id                      UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
---     categoria_id            UUID NOT NULL REFERENCES categorias_servico(id),
---     regiao_id               UUID NOT NULL REFERENCES regioes(id),
---     preco_hora              NUMERIC(10,2) NOT NULL,
---     acrescimo_fds           NUMERIC(5,2) NOT NULL DEFAULT 0,
---     desconto_semanal        NUMERIC(5,2) NOT NULL DEFAULT 10.00,
---     desconto_quinzenal      NUMERIC(5,2) NOT NULL DEFAULT 5.00,
---     desconto_duas_semana    NUMERIC(5,2) NOT NULL DEFAULT 15.00,
---     ativa                   BOOLEAN NOT NULL DEFAULT TRUE,
---     criado_em               TIMESTAMPTZ NOT NULL DEFAULT NOW(),
---     atualizado_em           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
---     UNIQUE (categoria_id, regiao_id)
--- );
+-- Movido para backend/migrations/V4__catalogo_precificacao.sql.
+-- Preferências (diferencial B) estão em backend/migrations/V3__preferencias_cliente.sql.
 
 
 -- =============================================================================
 -- Etapa 4 — Solicitações de Serviço
--- Virará V4__solicitacoes.sql
--- Depende de: V2 (clientes, enderecos), V3 (categorias_servico, opcionais)
+-- Virará V5__solicitacoes.sql
+-- Depende de: V2 (clientes, enderecos), V4 (categorias_servico, opcionais)
 -- =============================================================================
 
 -- CREATE TYPE frequencia_servico AS ENUM ('UNICA', 'SEMANAL', 'DUAS_POR_SEMANA', 'QUINZENAL');

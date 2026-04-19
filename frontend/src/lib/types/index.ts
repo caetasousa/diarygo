@@ -194,6 +194,68 @@ export interface DisponibilidadeResponse {
 	hora_fim: string;
 }
 
+// Catálogo (diferencial C)
+export type FrequenciaServico = 'UNICA' | 'SEMANAL' | 'QUINZENAL' | 'DUAS_POR_SEMANA';
+
+export interface CategoriaResponse {
+	id: string;
+	nome: string;
+	descricao: string;
+	duracao_minima_min: number;
+	ativa: boolean;
+}
+
+export interface OpcionalResponse {
+	id: string;
+	nome: string;
+	descricao: string;
+	valor_extra: number;
+	tempo_extra_min: number;
+	ativo: boolean;
+}
+
+export interface CalculoPrecoRequest {
+	categoria_id: string;
+	regiao_id: string;
+	num_quartos: number;
+	num_banheiros?: number;
+	num_salas?: number;
+	num_cozinhas?: number;
+	opcionais_ids?: string[];
+	frequencia?: FrequenciaServico;
+	data_servico?: string;
+}
+
+export type TipoItemCalculo = 'BASE' | 'COMODO' | 'OPCIONAL' | 'ACRESCIMO' | 'DESCONTO' | 'TOTAL';
+
+export interface ItemCalculo {
+	tipo: TipoItemCalculo;
+	label: string;
+	valor: number;
+}
+
+export interface CalculoPrecoResponse {
+	categoria_id: string;
+	regiao_id: string;
+	duracao_min: number;
+	valor_total: number;
+	itens: ItemCalculo[];
+}
+
+// Preferências (diferencial B)
+export type TipoPreferencia = 'FAVORITA' | 'BLOQUEADA';
+
+export interface PreferenciaResponse {
+	id: string;
+	profissional_id: string;
+	tipo: TipoPreferencia;
+	motivo: string;
+	nome: string;
+	foto_url: string;
+	nota_media: number;
+	criado_em: string;
+}
+
 // API Error
 export interface ApiError {
 	erro: string;

@@ -30,6 +30,7 @@
 				{/if}
 			{:else}
 				<a href="/#servicos" class="nav-link">Serviços</a>
+				<a href="/servicos" class="nav-link">Calcular orçamento</a>
 				<a href="/#como-funciona" class="nav-link">Como funciona</a>
 				<a href="/#para-diaristas" class="nav-link">Para diaristas</a>
 				<a href="/#faq" class="nav-link">Perguntas</a>

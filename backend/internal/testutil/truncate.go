@@ -26,6 +26,13 @@ var AllTables = []string{
 	"regioes",
 	"regioes_atuacao",
 	"disponibilidades",
+	// V3
+	"cliente_profissional_preferencia",
+	// V4
+	"categorias_servico",
+	"categorias_profissional",
+	"opcionais",
+	"tabela_precos",
 }
 
 // Truncate wipes every table listed in AllTables. Uses a single TRUNCATE ...
