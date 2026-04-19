@@ -147,7 +147,7 @@
 		height: 48px;
 		border-radius: 50%;
 		background: var(--color-green-3);
-		border: 1px solid rgba(34, 255, 153, 0.3);
+		border: 1px solid var(--color-green-4);
 		display: flex;
 		align-items: center;
 		justify-content: center;

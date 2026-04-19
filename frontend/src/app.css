@@ -54,8 +54,18 @@
 	--color-red-10:   #ff2047;
 
 	/* Surfaces */
-	--bg-hover-white: rgba(255, 255, 255, 0.28);
-	--bg-card:        rgba(255, 255, 255, 0.03);
+	--bg-hover-white:  rgba(255, 255, 255, 0.28);
+	--bg-hover-subtle: rgba(255, 255, 255, 0.04);
+	--bg-hover-medium: rgba(255, 255, 255, 0.06);
+	--bg-card:         rgba(255, 255, 255, 0.03);
+
+	/* Border hovers */
+	--border-frost-hover: rgba(214, 235, 253, 0.35);
+
+	/* Elevation shadows (floating elements over black) */
+	--shadow-float:  0 12px 32px rgba(0, 0, 0, 0.4);
+	--shadow-mockup: 0 40px 80px rgba(0, 0, 0, 0.5);
+	--shadow-lift:   0 24px 48px rgba(0, 0, 0, 0.4);
 
 	/* Aliases de compatibilidade */
 	--color-text-muted: #464a4d;
