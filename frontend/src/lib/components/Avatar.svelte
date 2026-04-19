@@ -55,7 +55,7 @@
 		align-items: center;
 		justify-content: center;
 		flex-shrink: 0;
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--bg-hover-subtle);
 		border: 1px solid var(--border-frost);
 		font-weight: 600;
 		letter-spacing: -0.3px;

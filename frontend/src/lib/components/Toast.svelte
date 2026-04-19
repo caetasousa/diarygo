@@ -37,7 +37,7 @@
 		padding: 12px 16px;
 		border-radius: var(--radius-standard);
 		border: 1px solid var(--border-frost);
-		background: rgba(10, 10, 10, 0.95);
+		background: var(--bg-toast);
 		backdrop-filter: blur(8px);
 		font-size: 0.875rem;
 		min-width: 280px;

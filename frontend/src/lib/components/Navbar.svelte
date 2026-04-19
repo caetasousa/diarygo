@@ -72,7 +72,7 @@
 		top: 0;
 		z-index: 100;
 		width: 100%;
-		background: rgba(0, 0, 0, 0.72);
+		background: var(--bg-navbar);
 		backdrop-filter: blur(14px) saturate(140%);
 		-webkit-backdrop-filter: blur(14px) saturate(140%);
 		border-bottom: 1px solid var(--border-frost);
@@ -104,7 +104,7 @@
 		justify-content: center;
 		width: 22px;
 		height: 22px;
-		border-radius: 6px;
+		border-radius: var(--radius-subtle);
 		background: linear-gradient(135deg, var(--color-orange-10), #ff6b1a);
 		color: #1a0a00;
 	}
@@ -125,7 +125,7 @@
 
 	.nav-link {
 		padding: 7px 12px;
-		border-radius: 7px;
+		border-radius: var(--radius-standard);
 		font-size: 0.8125rem;
 		font-weight: 500;
 		color: var(--color-text-secondary);
@@ -136,7 +136,7 @@
 
 	.nav-link:hover {
 		color: var(--color-text-primary);
-		background: rgba(255, 255, 255, 0.04);
+		background: var(--bg-hover-subtle);
 		opacity: 1;
 	}
 
@@ -154,7 +154,7 @@
 		padding: 7px 12px;
 		background: transparent;
 		border: none;
-		border-radius: 7px;
+		border-radius: var(--radius-standard);
 		font-size: 0.8125rem;
 		font-weight: 500;
 		color: var(--color-text-secondary);
@@ -166,7 +166,7 @@
 
 	.link-btn:hover {
 		color: var(--color-text-primary);
-		background: rgba(255, 255, 255, 0.04);
+		background: var(--bg-hover-subtle);
 		opacity: 1;
 	}
 
@@ -177,7 +177,7 @@
 		padding: 8px 14px;
 		background: var(--color-white);
 		color: var(--color-black);
-		border-radius: 7px;
+		border-radius: var(--radius-pill);
 		font-size: 0.8125rem;
 		font-weight: 600;
 		text-decoration: none;
@@ -198,14 +198,14 @@
 		justify-content: center;
 		background: transparent;
 		border: 1px solid var(--border-frost);
-		border-radius: 7px;
+		border-radius: var(--radius-standard);
 		color: var(--color-text-primary);
 		cursor: pointer;
 		transition: background 0.12s;
 	}
 
 	.menu-toggle:hover {
-		background: rgba(255, 255, 255, 0.04);
+		background: var(--bg-hover-subtle);
 	}
 
 	@media (max-width: 900px) {

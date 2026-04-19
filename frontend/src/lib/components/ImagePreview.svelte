@@ -96,7 +96,7 @@
 	.preview {
 		position: relative;
 		overflow: hidden;
-		background: rgba(255, 255, 255, 0.04);
+		background: var(--bg-hover-subtle);
 		border: 1px solid var(--border-frost);
 		display: flex;
 		align-items: center;
@@ -110,7 +110,7 @@
 	.size-md { width: 88px; height: 88px; }
 	.size-lg { width: 140px; height: 140px; }
 
-	.shape-square { border-radius: 10px; }
+	.shape-square { border-radius: var(--radius-card); }
 	.shape-circle { border-radius: 50%; }
 
 	.clickable { cursor: pointer; transition: transform 0.12s, border-color 0.12s; }

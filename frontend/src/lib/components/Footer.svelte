@@ -107,7 +107,7 @@
 	.footer {
 		border-top: 1px solid var(--border-frost);
 		background:
-			radial-gradient(80% 60% at 50% 0%, rgba(255, 128, 31, 0.03), transparent 70%),
+			radial-gradient(80% 60% at 50% 0%, var(--bg-footer-glow), transparent 70%),
 			#000;
 		margin-top: 80px;
 	}
@@ -143,7 +143,7 @@
 		justify-content: center;
 		width: 24px;
 		height: 24px;
-		border-radius: 7px;
+		border-radius: var(--radius-standard);
 		background: linear-gradient(135deg, var(--color-orange-10), #ff6b1a);
 		color: #1a0a00;
 	}
@@ -172,9 +172,9 @@
 		align-items: center;
 		gap: 6px;
 		padding: 6px 10px;
-		background: rgba(255, 255, 255, 0.025);
+		background: var(--bg-card);
 		border: 1px solid var(--border-frost);
-		border-radius: 99px;
+		border-radius: var(--radius-pill);
 		font-size: 0.6875rem;
 		color: var(--color-text-secondary);
 		font-weight: 500;
@@ -251,9 +251,9 @@
 		justify-content: center;
 		width: 32px;
 		height: 32px;
-		background: rgba(255, 255, 255, 0.02);
+		background: var(--bg-card);
 		border: 1px solid var(--border-frost);
-		border-radius: 7px;
+		border-radius: var(--radius-standard);
 		color: var(--color-text-tertiary);
 		text-decoration: none;
 		transition: color 0.12s, background 0.12s, border-color 0.12s;
@@ -261,8 +261,8 @@
 
 	.social-btn:hover {
 		color: var(--color-text-primary);
-		background: rgba(255, 255, 255, 0.06);
-		border-color: rgba(214, 235, 253, 0.35);
+		background: var(--bg-hover-medium);
+		border-color: var(--border-frost-hover);
 		opacity: 1;
 	}
 
