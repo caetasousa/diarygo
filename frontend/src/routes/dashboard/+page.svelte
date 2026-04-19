@@ -939,7 +939,7 @@
 		position: relative;
 		overflow: hidden;
 		border: 1px solid var(--border-frost);
-		border-radius: 16px;
+		border-radius: var(--radius-large);
 		background:
 			radial-gradient(120% 80% at 0% 0%, rgba(255, 128, 31, 0.06), transparent 50%),
 			linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.008));
@@ -1020,7 +1020,7 @@
 		width: 280px;
 		background: #0a0a0a;
 		border: 1px solid var(--border-frost);
-		border-radius: 12px;
+		border-radius: var(--radius-card);
 		overflow: hidden;
 		box-shadow:
 			0 20px 60px rgba(0, 0, 0, 0.5),
@@ -1065,7 +1065,7 @@
 	.mini-icon-wrap {
 		width: 30px;
 		height: 30px;
-		border-radius: 7px;
+		border-radius: var(--radius-standard);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -1130,7 +1130,7 @@
 		color: var(--color-green-10);
 		background: var(--color-green-3);
 		padding: 2px 7px;
-		border-radius: 99px;
+		border-radius: var(--radius-pill);
 	}
 
 	.mini-divider {
@@ -1145,7 +1145,7 @@
 		font-size: 0.75rem;
 		font-weight: 600;
 		padding: 9px;
-		border-radius: 7px;
+		border-radius: var(--radius-standard);
 		text-align: center;
 	}
 
@@ -1158,7 +1158,7 @@
 		background: var(--color-white);
 		color: var(--color-black);
 		border: none;
-		border-radius: 8px;
+		border-radius: var(--radius-pill);
 		font-size: 0.8125rem;
 		font-weight: 600;
 		letter-spacing: -0.1px;
@@ -1180,7 +1180,7 @@
 		background: transparent;
 		color: var(--color-text-primary);
 		border: 1px solid var(--border-frost);
-		border-radius: 8px;
+		border-radius: var(--radius-pill);
 		font-size: 0.8125rem;
 		font-weight: 500;
 		text-decoration: none;
@@ -1188,8 +1188,8 @@
 	}
 
 	.btn-ghost-pill:hover {
-		background: rgba(255, 255, 255, 0.04);
-		border-color: rgba(214, 235, 253, 0.35);
+		background: var(--bg-hover-subtle);
+		border-color: var(--border-frost-hover);
 		opacity: 1;
 	}
 
@@ -1205,7 +1205,7 @@
 	.stat-card {
 		background: var(--bg-card);
 		border: 1px solid var(--border-frost);
-		border-radius: 12px;
+		border-radius: var(--radius-card);
 		padding: 16px 18px 4px;
 		display: flex;
 		flex-direction: column;
@@ -1215,7 +1215,7 @@
 	}
 
 	.stat-card:hover {
-		border-color: rgba(214, 235, 253, 0.3);
+		border-color: var(--border-frost-hover);
 		transform: translateY(-1px);
 	}
 
@@ -1236,7 +1236,7 @@
 	.stat-icon {
 		width: 26px;
 		height: 26px;
-		border-radius: 7px;
+		border-radius: var(--radius-standard);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -1321,9 +1321,9 @@
 		align-items: center;
 		gap: 5px;
 		padding: 6px 12px;
-		background: rgba(255, 255, 255, 0.03);
+		background: var(--bg-card);
 		border: 1px solid var(--border-frost);
-		border-radius: 99px;
+		border-radius: var(--radius-pill);
 		font-size: 0.75rem;
 		color: var(--color-text-secondary);
 		text-decoration: none;
@@ -1332,8 +1332,8 @@
 
 	.section-link-pill:hover {
 		color: var(--color-text-primary);
-		background: rgba(255, 255, 255, 0.06);
-		border-color: rgba(214, 235, 253, 0.35);
+		background: var(--bg-hover-medium);
+		border-color: var(--border-frost-hover);
 		opacity: 1;
 	}
 
@@ -1350,14 +1350,14 @@
 		padding: 13px 14px;
 		background: var(--bg-card);
 		border: 1px solid var(--border-frost);
-		border-radius: 10px;
+		border-radius: var(--radius-card);
 		text-decoration: none;
 		transition: border-color 0.15s, transform 0.15s, background 0.15s;
 	}
 
 	.quick-card:hover {
-		border-color: rgba(214, 235, 253, 0.35);
-		background: rgba(255, 255, 255, 0.04);
+		border-color: var(--border-frost-hover);
+		background: var(--bg-hover-subtle);
 		transform: translateY(-1px);
 		opacity: 1;
 	}
@@ -1365,8 +1365,8 @@
 	.quick-icon {
 		width: 34px;
 		height: 34px;
-		border-radius: 8px;
-		background: rgba(255, 255, 255, 0.04);
+		border-radius: var(--radius-standard);
+		background: var(--bg-hover-subtle);
 		border: 1px solid var(--border-frost);
 		display: flex;
 		align-items: center;
@@ -1438,7 +1438,7 @@
 	.panel {
 		background: var(--bg-card);
 		border: 1px solid var(--border-frost);
-		border-radius: 12px;
+		border-radius: var(--radius-card);
 		overflow: hidden;
 		box-shadow: var(--shadow-ring);
 	}
@@ -1473,13 +1473,13 @@
 		color: var(--color-text-tertiary);
 		text-decoration: none;
 		padding: 4px 8px;
-		border-radius: 6px;
+		border-radius: var(--radius-subtle);
 		transition: color 0.12s, background 0.12s;
 	}
 
 	.panel-link:hover {
 		color: var(--color-text-primary);
-		background: rgba(255, 255, 255, 0.04);
+		background: var(--bg-hover-subtle);
 		opacity: 1;
 	}
 
@@ -1545,8 +1545,8 @@
 		position: relative;
 		width: 44px;
 		height: 44px;
-		border-radius: 12px;
-		background: linear-gradient(135deg, rgba(255, 128, 31, 0.15), rgba(255, 128, 31, 0.04));
+		border-radius: var(--radius-card);
+		background: linear-gradient(135deg, var(--color-orange-4), rgba(255, 128, 31, 0.04));
 		border: 1px solid var(--color-orange-4);
 		display: flex;
 		align-items: center;
@@ -1675,9 +1675,9 @@
 
 	.tip-card {
 		padding: 16px;
-		background: rgba(255, 255, 255, 0.02);
+		background: var(--bg-card);
 		border: 1px solid var(--border-frost);
-		border-radius: 10px;
+		border-radius: var(--radius-card);
 		display: flex;
 		flex-direction: column;
 		gap: 6px;
@@ -1686,7 +1686,7 @@
 	.tip-icon {
 		width: 30px;
 		height: 30px;
-		border-radius: 8px;
+		border-radius: var(--radius-standard);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -1716,7 +1716,7 @@
 	.side-panel {
 		background: var(--bg-card);
 		border: 1px solid var(--border-frost);
-		border-radius: 12px;
+		border-radius: var(--radius-card);
 		padding: 16px 18px;
 		box-shadow: var(--shadow-ring);
 	}
@@ -1779,21 +1779,21 @@
 		align-items: center;
 		gap: 11px;
 		padding: 9px 8px;
-		border-radius: 8px;
+		border-radius: var(--radius-standard);
 		text-decoration: none;
 		transition: background 0.12s;
 	}
 
 	.check-row:hover {
-		background: rgba(255, 255, 255, 0.04);
+		background: var(--bg-hover-subtle);
 		opacity: 1;
 	}
 
 	.check-mark {
 		width: 24px;
 		height: 24px;
-		border-radius: 7px;
-		background: rgba(255, 255, 255, 0.03);
+		border-radius: var(--radius-standard);
+		background: var(--bg-card);
 		border: 1px solid var(--border-frost);
 		display: flex;
 		align-items: center;
@@ -1857,9 +1857,9 @@
 		font-size: 0.625rem;
 		font-weight: 600;
 		color: var(--color-text-tertiary);
-		background: rgba(255, 255, 255, 0.04);
+		background: var(--bg-hover-subtle);
 		border: 1px solid var(--border-frost);
-		border-radius: 99px;
+		border-radius: var(--radius-pill);
 		padding: 2px 8px;
 		letter-spacing: 0.2px;
 	}
@@ -1890,8 +1890,8 @@
 	.week-box {
 		width: 100%;
 		aspect-ratio: 1;
-		border-radius: 6px;
-		background: rgba(255, 255, 255, 0.02);
+		border-radius: var(--radius-subtle);
+		background: var(--bg-card);
 		border: 1px solid var(--border-frost);
 		display: flex;
 		align-items: center;
@@ -1903,7 +1903,7 @@
 	}
 
 	.week-cell.is-today .week-box {
-		background: rgba(255, 128, 31, 0.08);
+		background: var(--color-orange-4);
 		border-color: var(--color-orange-10);
 		color: var(--color-orange-11);
 	}
@@ -1940,7 +1940,7 @@
 	.support-icon-wrap {
 		width: 38px;
 		height: 38px;
-		border-radius: 10px;
+		border-radius: var(--radius-card);
 		background: var(--color-blue-4);
 		color: var(--color-blue-10);
 		display: flex;
@@ -1967,15 +1967,15 @@
 		gap: 14px;
 		padding: 14px 20px;
 		background:
-			linear-gradient(90deg, rgba(255, 128, 31, 0.08), rgba(255, 128, 31, 0.02));
+			linear-gradient(90deg, var(--color-orange-4), rgba(255, 128, 31, 0.02));
 		border: 1px solid var(--color-orange-4);
-		border-radius: 12px;
+		border-radius: var(--radius-card);
 	}
 
 	.approval-icon {
 		width: 34px;
 		height: 34px;
-		border-radius: 8px;
+		border-radius: var(--radius-standard);
 		background: var(--color-orange-4);
 		color: var(--color-orange-10);
 		display: flex;
@@ -2009,9 +2009,9 @@
 		align-items: center;
 		gap: 6px;
 		padding: 5px 12px;
-		background: rgba(255, 128, 31, 0.15);
+		background: var(--color-orange-4);
 		color: var(--color-orange-11);
-		border-radius: 99px;
+		border-radius: var(--radius-pill);
 		font-size: 0.6875rem;
 		font-weight: 600;
 		text-transform: uppercase;
@@ -2047,17 +2047,17 @@
 		flex-direction: column;
 		gap: 8px;
 		padding: 18px;
-		background: rgba(255, 255, 255, 0.02);
+		background: var(--bg-card);
 		border: 1px solid var(--border-frost);
-		border-radius: 10px;
+		border-radius: var(--radius-card);
 		text-decoration: none;
 		color: var(--color-text-primary);
 		transition: border-color 0.15s, transform 0.15s, background 0.15s;
 	}
 
 	.admin-card:hover {
-		border-color: rgba(214, 235, 253, 0.35);
-		background: rgba(255, 255, 255, 0.04);
+		border-color: var(--border-frost-hover);
+		background: var(--bg-hover-subtle);
 		transform: translateY(-1px);
 		opacity: 1;
 	}

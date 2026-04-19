@@ -202,7 +202,7 @@
 		justify-content: center;
 		width: 22px;
 		height: 22px;
-		border-radius: 6px;
+		border-radius: var(--radius-subtle);
 		background: linear-gradient(135deg, var(--color-orange-10), #ff6b1a);
 		color: #1a0a00;
 		flex-shrink: 0;
@@ -217,7 +217,7 @@
 		padding: 8px 12px;
 		background: var(--color-white);
 		color: var(--color-black);
-		border-radius: 8px;
+		border-radius: var(--radius-pill);
 		font-size: 0.8125rem;
 		font-weight: 600;
 		letter-spacing: -0.2px;
@@ -236,9 +236,9 @@
 		align-items: center;
 		gap: 10px;
 		padding: 10px 12px;
-		background: rgba(255, 128, 31, 0.08);
+		background: var(--color-orange-4);
 		border: 1px solid var(--color-orange-4);
-		border-radius: 8px;
+		border-radius: var(--radius-standard);
 	}
 
 	.status-dot {
@@ -301,7 +301,7 @@
 		align-items: center;
 		gap: 10px;
 		padding: 7px 10px;
-		border-radius: 7px;
+		border-radius: var(--radius-standard);
 		font-size: 0.8125rem;
 		font-weight: 500;
 		color: var(--color-text-secondary);
@@ -313,13 +313,13 @@
 
 	.nav-item:hover {
 		color: var(--color-text-primary);
-		background: rgba(255, 255, 255, 0.04);
+		background: var(--bg-hover-subtle);
 		opacity: 1;
 	}
 
 	.nav-item.active {
 		color: var(--color-text-primary);
-		background: rgba(255, 255, 255, 0.07);
+		background: var(--bg-hover-medium);
 	}
 
 	.nav-item.active::before {
@@ -358,7 +358,7 @@
 		align-items: center;
 		gap: 9px;
 		padding: 6px 8px;
-		border-radius: 6px;
+		border-radius: var(--radius-subtle);
 		font-size: 0.75rem;
 		font-weight: 500;
 		color: var(--color-text-tertiary);
@@ -368,7 +368,7 @@
 
 	.foot-link:hover {
 		color: var(--color-text-primary);
-		background: rgba(255, 255, 255, 0.04);
+		background: var(--bg-hover-subtle);
 		opacity: 1;
 	}
 
@@ -399,9 +399,9 @@
 		align-items: center;
 		gap: 10px;
 		padding: 8px;
-		background: rgba(255, 255, 255, 0.03);
+		background: var(--bg-card);
 		border: 1px solid var(--border-frost);
-		border-radius: 8px;
+		border-radius: var(--radius-standard);
 		margin-bottom: 8px;
 	}
 
@@ -449,7 +449,7 @@
 		height: 26px;
 		background: transparent;
 		border: 1px solid transparent;
-		border-radius: 6px;
+		border-radius: var(--radius-subtle);
 		color: var(--color-text-tertiary);
 		cursor: pointer;
 		transition: color 0.12s, background 0.12s, border-color 0.12s;

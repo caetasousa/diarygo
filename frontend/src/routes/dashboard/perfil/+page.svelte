@@ -379,7 +379,7 @@
 	.form-section {
 		background: var(--bg-card);
 		border: 1px solid var(--border-frost);
-		border-radius: 12px;
+		border-radius: var(--radius-card);
 		padding: 24px;
 		box-shadow: var(--shadow-ring);
 	}
@@ -426,7 +426,7 @@
 	.info-panel {
 		background: var(--bg-card);
 		border: 1px solid var(--border-frost);
-		border-radius: 12px;
+		border-radius: var(--radius-card);
 		padding: 24px;
 		box-shadow: var(--shadow-ring);
 	}
@@ -454,16 +454,16 @@
 	.score-bar {
 		width: 100%;
 		height: 3px;
-		background: rgba(255, 255, 255, 0.08);
-		border-radius: 9999px;
+		background: var(--bg-hover-medium);
+		border-radius: var(--radius-pill);
 		margin-bottom: 12px;
 	}
 
 	.score-fill {
 		height: 100%;
-		border-radius: 9999px;
+		border-radius: var(--radius-pill);
 		background: var(--color-green-10);
-		box-shadow: 0 0 6px rgba(34, 255, 153, 0.4);
+		box-shadow: 0 0 6px rgba(34, 255, 153, 0.4); /* green glow único */
 		transition: width 0.6s ease;
 	}
 
@@ -481,7 +481,7 @@
 		padding: 20px 24px;
 		background: var(--bg-card);
 		border: 1px solid var(--border-frost);
-		border-radius: 12px;
+		border-radius: var(--radius-card);
 		box-shadow: var(--shadow-ring);
 		margin-bottom: 24px;
 		flex-wrap: wrap;

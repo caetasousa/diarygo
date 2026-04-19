@@ -1408,7 +1408,7 @@
 		background: rgba(255, 128, 31, 0.12);
 		color: var(--color-orange-11);
 		border: 1px solid var(--color-orange-4);
-		border-radius: 99px;
+		border-radius: var(--radius-pill);
 		text-transform: uppercase;
 		letter-spacing: 0.3px;
 	}

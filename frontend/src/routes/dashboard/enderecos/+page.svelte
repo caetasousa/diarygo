@@ -338,7 +338,7 @@
 	.form-card {
 		background: var(--bg-card);
 		border: 1px solid var(--border-frost);
-		border-radius: 12px;
+		border-radius: var(--radius-card);
 		padding: 24px;
 		margin-bottom: 24px;
 		box-shadow: var(--shadow-ring);
@@ -362,7 +362,7 @@
 	.close-btn {
 		background: none; border: none; cursor: pointer;
 		color: var(--color-text-tertiary); padding: 4px;
-		border-radius: 6px; display: flex;
+		border-radius: var(--radius-subtle); display: flex;
 		transition: color 0.12s, background 0.12s;
 	}
 	.close-btn:hover { color: var(--color-text-primary); background: var(--bg-hover-white); }
@@ -427,12 +427,12 @@
 		display: flex; flex-direction: column; align-items: center;
 		text-align: center; padding: 60px 24px; gap: 10px;
 		background: var(--bg-card); border: 1px solid var(--border-frost);
-		border-radius: 12px; box-shadow: var(--shadow-ring);
+		border-radius: var(--radius-card); box-shadow: var(--shadow-ring);
 	}
 
 	.empty-icon {
-		width: 48px; height: 48px; border-radius: 12px;
-		background: rgba(255,255,255,0.04); border: 1px solid var(--border-frost);
+		width: 48px; height: 48px; border-radius: var(--radius-card);
+		background: var(--bg-hover-subtle); border: 1px solid var(--border-frost);
 		display: flex; align-items: center; justify-content: center;
 		color: var(--color-text-tertiary); margin-bottom: 4px;
 	}

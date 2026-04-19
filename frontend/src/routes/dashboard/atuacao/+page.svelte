@@ -307,7 +307,7 @@
 	.col {
 		background: var(--bg-card);
 		border: 1px solid var(--border-frost);
-		border-radius: 12px;
+		border-radius: var(--radius-card);
 		box-shadow: var(--shadow-ring);
 		overflow: hidden;
 	}
@@ -335,21 +335,21 @@
 		padding: 10px 12px;
 		background: transparent;
 		border: 1px solid transparent;
-		border-radius: 8px;
+		border-radius: var(--radius-standard);
 		cursor: pointer; text-align: left;
 		font-family: inherit;
 		transition: background 0.12s, border-color 0.12s;
 	}
 	.region-card:hover {
-		background: rgba(255,255,255,0.03);
+		background: var(--bg-hover-subtle);
 		border-color: var(--border-frost);
 	}
 	.region-card.selected {
-		background: rgba(0, 117, 255, 0.06);
+		background: var(--color-blue-wash);
 		border-color: var(--color-blue-5);
 	}
 	.region-check {
-		width: 18px; height: 18px; border-radius: 4px;
+		width: 18px; height: 18px; border-radius: var(--radius-sharp);
 		border: 1.5px solid var(--border-frost);
 		display: flex; align-items: center; justify-content: center;
 		flex-shrink: 0; margin-top: 1px;
@@ -379,7 +379,7 @@
 		transition: background 0.12s;
 	}
 	.slot-row:last-child { border-bottom: none; }
-	.slot-row.slot-active { background: rgba(255,255,255,0.02); }
+	.slot-row.slot-active { background: var(--bg-card); }
 
 	.day-toggle {
 		min-width: 130px;
@@ -389,8 +389,8 @@
 	}
 	.day-short {
 		display: none;
-		width: 32px; height: 32px; border-radius: 8px;
-		background: rgba(255,255,255,0.05);
+		width: 32px; height: 32px; border-radius: var(--radius-standard);
+		background: var(--bg-hover-subtle);
 		border: 1px solid var(--border-frost);
 		font-size: 0.75rem; font-weight: 600;
 		color: var(--color-text-tertiary);
@@ -406,9 +406,9 @@
 		display: flex; align-items: center; gap: 8px; flex: 1; flex-wrap: wrap;
 	}
 	.time-input {
-		background: rgba(255,255,255,0.04);
+		background: var(--bg-hover-subtle);
 		border: 1px solid var(--border-frost);
-		border-radius: 7px;
+		border-radius: var(--radius-standard);
 		padding: 6px 10px;
 		font-family: var(--font-mono);
 		font-size: 0.875rem;
@@ -432,9 +432,9 @@
 		justify-content: space-between;
 		gap: 16px;
 		padding: 12px 16px;
-		background: rgba(10,10,10,0.92);
+		background: rgba(10,10,10,0.92); /* save-bar backdrop opaco */
 		border: 1px solid var(--border-frost);
-		border-radius: 10px;
+		border-radius: var(--radius-card);
 		backdrop-filter: blur(8px);
 		opacity: 0;
 		transform: translateY(8px);

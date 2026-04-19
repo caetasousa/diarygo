@@ -179,7 +179,7 @@
 	.form-card {
 		background: var(--bg-card);
 		border: 1px solid var(--border-frost);
-		border-radius: 12px;
+		border-radius: var(--radius-card);
 		padding: 20px;
 		box-shadow: var(--shadow-ring);
 	}
@@ -210,7 +210,7 @@
 	.empty-state {
 		padding: 40px 24px; text-align: center;
 		background: var(--bg-card); border: 1px solid var(--border-frost);
-		border-radius: 12px; box-shadow: var(--shadow-ring);
+		border-radius: var(--radius-card); box-shadow: var(--shadow-ring);
 	}
 	.empty-title { font-size: 0.9375rem; font-weight: 500; color: var(--color-text-primary); margin-bottom: 6px; }
 	.empty-sub { font-size: 0.8125rem; color: var(--color-text-tertiary); }
@@ -218,7 +218,7 @@
 	.ref-list {
 		background: var(--bg-card);
 		border: 1px solid var(--border-frost);
-		border-radius: 12px;
+		border-radius: var(--radius-card);
 		overflow: hidden;
 		box-shadow: var(--shadow-ring);
 	}

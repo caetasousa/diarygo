@@ -44,9 +44,10 @@
 	--color-green-10: #22ff99;
 
 	/* Accent — Blue */
-	--color-blue-4:  rgba(0, 117, 255, 0.34);
-	--color-blue-5:  rgba(0, 129, 253, 0.42);
-	--color-blue-10: #3b9eff;
+	--color-blue-4:    rgba(0, 117, 255, 0.34);
+	--color-blue-5:    rgba(0, 129, 253, 0.42);
+	--color-blue-10:   #3b9eff;
+	--color-blue-wash: rgba(0, 117, 255, 0.06); /* seleção sutil em listas/cards */
 
 	/* Accent — Yellow / Red */
 	--color-yellow-9: #ffc53d;
@@ -66,6 +67,11 @@
 	--shadow-float:  0 12px 32px rgba(0, 0, 0, 0.4);
 	--shadow-mockup: 0 40px 80px rgba(0, 0, 0, 0.5);
 	--shadow-lift:   0 24px 48px rgba(0, 0, 0, 0.4);
+
+	/* Semantic surfaces */
+	--bg-navbar:      rgba(0, 0, 0, 0.72);      /* navbar sticky sobre conteúdo */
+	--bg-toast:       rgba(10, 10, 10, 0.95);   /* toasts sobre qualquer fundo */
+	--bg-footer-glow: rgba(255, 128, 31, 0.03); /* gradient inferior do footer */
 
 	/* Aliases de compatibilidade */
 	--color-text-muted: #464a4d;
