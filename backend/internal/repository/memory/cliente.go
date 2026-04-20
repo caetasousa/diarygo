@@ -97,6 +97,29 @@ func (r *ClienteRepository) BuscarPorCPF(ctx context.Context, cpf string) (*doma
 	return &copia, nil
 }
 
+// AjustarScore soma delta ao score do cliente com clamp em [0, 100].
+func (r *ClienteRepository) AjustarScore(ctx context.Context, id uuid.UUID, delta int) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	c, existe := r.clientes[id]
+	if !existe {
+		return domain.ErrClienteNaoEncontrado
+	}
+
+	novo := c.Score + delta
+	if novo < 0 {
+		novo = 0
+	}
+	if novo > 100 {
+		novo = 100
+	}
+	c.Score = novo
+	c.AtualizadoEm = time.Now()
+
+	return nil
+}
+
 // Atualizar substitui o cliente existente. Atualiza indice de CPF se mudou.
 func (r *ClienteRepository) Atualizar(ctx context.Context, c *domain.Cliente) error {
 	r.mu.Lock()

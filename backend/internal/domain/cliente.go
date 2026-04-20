@@ -43,6 +43,9 @@ type ClienteReader interface {
 type ClienteWriter interface {
 	Criar(ctx context.Context, c *Cliente) error
 	Atualizar(ctx context.Context, c *Cliente) error
+	// AjustarScore soma delta ao score do cliente, com clamp em [0, 100].
+	// Usado para penalidades (delta negativo) e bônus (positivo).
+	AjustarScore(ctx context.Context, id uuid.UUID, delta int) error
 }
 
 // ClienteRepository e a interface completa do repositorio de clientes.

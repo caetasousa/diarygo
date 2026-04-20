@@ -83,16 +83,15 @@ func (s *PrecificacaoService) ListarOpcionaisDaCategoria(ctx context.Context, ca
 	return res, nil
 }
 
-// CalcularValorReferencia produz o orcamento com breakdown completo.
-// Regras:
-//   - duracao_min = max(duracao_minima_categoria, sum(tempos por comodo) + sum(opcionais.tempo))
-//   - valor_base = preco_hora * horas (proporcional a duracao)
-//   - opcionais somam valor e tempo
-//   - fim-de-semana aplica acrescimo (+%) apos opcionais
-//   - frequencia aplica desconto (-%) no final
-//
-// O breakdown lista cada item na ordem: BASE → COMODO → OPCIONAIS → ACRESCIMO → DESCONTO → TOTAL.
-func (s *PrecificacaoService) CalcularValorReferencia(ctx context.Context, req domain.CalculoPrecoRequest) (*domain.CalculoPrecoResponse, error) {
+// resultadoCalculo é o resultado interno compartilhado entre os métodos públicos.
+type resultadoCalculo struct {
+	resp      *domain.CalculoPrecoResponse
+	snapshots []domain.SolicitacaoOpcional
+}
+
+// calcularInterno executa toda a lógica de cálculo e devolve tanto a resposta
+// como os snapshots de opcionais para congelamento em solicitações.
+func (s *PrecificacaoService) calcularInterno(ctx context.Context, req domain.CalculoPrecoRequest) (*resultadoCalculo, error) {
 	if req.CategoriaID == uuid.Nil {
 		return nil, domain.ErrCategoriaNaoEncontrada
 	}
@@ -137,6 +136,8 @@ func (s *PrecificacaoService) CalcularValorReferencia(ctx context.Context, req d
 	// Opcionais somam tempo e valor.
 	opcionaisValor := 0.0
 	opcionaisItens := make([]domain.ItemCalculo, 0, len(req.OpcionaisIDs))
+	snapshots := make([]domain.SolicitacaoOpcional, 0, len(req.OpcionaisIDs))
+
 	for _, oid := range req.OpcionaisIDs {
 		op, err := s.catalogo.BuscarOpcionalPorID(ctx, oid)
 		if err != nil {
@@ -148,6 +149,12 @@ func (s *PrecificacaoService) CalcularValorReferencia(ctx context.Context, req d
 			Tipo:  ItemOPCIONAL,
 			Label: op.Nome,
 			Valor: op.ValorExtra,
+		})
+		snapshots = append(snapshots, domain.SolicitacaoOpcional{
+			OpcionalID:    op.ID,
+			NomeSnapshot:  op.Nome,
+			ValorSnapshot: op.ValorExtra,
+			TempoSnapshot: op.TempoExtraMin,
 		})
 	}
 
@@ -220,13 +227,35 @@ func (s *PrecificacaoService) CalcularValorReferencia(ctx context.Context, req d
 		Valor: total,
 	})
 
-	return &domain.CalculoPrecoResponse{
+	resp := &domain.CalculoPrecoResponse{
 		CategoriaID: req.CategoriaID,
 		RegiaoID:    req.RegiaoID,
 		DuracaoMin:  duracaoMin,
 		ValorTotal:  total,
 		Itens:       itens,
-	}, nil
+	}
+
+	return &resultadoCalculo{resp: resp, snapshots: snapshots}, nil
+}
+
+// CalcularValorReferencia produz o orcamento com breakdown completo.
+// O breakdown lista cada item na ordem: BASE → COMODO → OPCIONAIS → ACRESCIMO → DESCONTO → TOTAL.
+func (s *PrecificacaoService) CalcularValorReferencia(ctx context.Context, req domain.CalculoPrecoRequest) (*domain.CalculoPrecoResponse, error) {
+	res, err := s.calcularInterno(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return res.resp, nil
+}
+
+// CalcularComOpcionais é idêntico a CalcularValorReferencia mas também devolve
+// os snapshots de cada opcional para congelamento em SolicitacaoOpcional.
+func (s *PrecificacaoService) CalcularComOpcionais(ctx context.Context, req domain.CalculoPrecoRequest) (*domain.CalculoPrecoResponse, []domain.SolicitacaoOpcional, error) {
+	res, err := s.calcularInterno(ctx, req)
+	if err != nil {
+		return nil, nil, err
+	}
+	return res.resp, res.snapshots, nil
 }
 
 func round2(v float64) float64 {

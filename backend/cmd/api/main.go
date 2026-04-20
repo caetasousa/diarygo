@@ -78,6 +78,8 @@ func main() {
 	)
 	preferenciaService := service.NewPreferenciaService(preferenciaRepo, clienteRepo, profissionalRepo)
 	precificacaoService := service.NewPrecificacaoService(catalogoRepo, regiaoRepo)
+	solicRepo := memory.NewSolicitacaoRepository()
+	solicitacaoService := service.NewSolicitacaoService(solicRepo, enderecoRepo, clienteRepo, precificacaoService)
 
 	// Handlers
 	authHandler := handler.NewAuthHandler(authService)
@@ -87,6 +89,7 @@ func main() {
 	regiaoHandler := handler.NewRegiaoHandler(credenciamentoService)
 	preferenciaHandler := handler.NewPreferenciaHandler(preferenciaService)
 	catalogoHandler := handler.NewCatalogoHandler(precificacaoService)
+	solicitacaoHandler := handler.NewSolicitacaoHandler(solicitacaoService)
 
 	r := chi.NewRouter()
 
@@ -148,6 +151,7 @@ func main() {
 				r.Mount("/clientes/me/enderecos", enderecoHandler.Routes())
 				r.Mount("/clientes/me/favoritas", preferenciaHandler.RoutesFavoritas())
 				r.Mount("/clientes/me/bloqueios", preferenciaHandler.RoutesBloqueios())
+				r.Mount("/solicitacoes", solicitacaoHandler.Routes())
 			})
 
 			// Rotas de profissional — apenas PROFISSIONAL
