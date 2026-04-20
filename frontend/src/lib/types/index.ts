@@ -256,6 +256,52 @@ export interface PreferenciaResponse {
 	criado_em: string;
 }
 
+// ============================================================
+// Etapa 4 — Solicitações de Serviço
+// ============================================================
+
+export type StatusSolicitacao =
+	| 'AGUARDANDO'
+	| 'ATRIBUIDA'
+	| 'CONFIRMADA'
+	| 'EM_ANDAMENTO'
+	| 'CONCLUIDA'
+	| 'CANCELADA';
+
+export interface CriarSolicitacaoRequest {
+	endereco_id: string;
+	categoria_id: string;
+	regiao_id: string;
+	num_quartos: number;
+	num_banheiros: number;
+	num_salas: number;
+	num_cozinhas: number;
+	opcionais_ids: string[];
+	frequencia: FrequenciaServico;
+	data_servico: string; // ISO 8601
+	observacao?: string;
+}
+
+export interface SolicitacaoResponse {
+	id: string;
+	endereco_id: string;
+	categoria_id: string;
+	regiao_id: string;
+	num_quartos: number;
+	num_banheiros: number;
+	num_salas: number;
+	num_cozinhas: number;
+	frequencia: FrequenciaServico;
+	data_servico: string;
+	observacao: string;
+	valor_total: number;
+	duracao_min: number;
+	breakdown: ItemCalculo[];
+	status: StatusSolicitacao;
+	criada_em: string;
+	cancelada_em?: string;
+}
+
 // API Error
 export interface ApiError {
 	erro: string;

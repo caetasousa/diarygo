@@ -27,7 +27,10 @@ import type {
 	CalculoPrecoRequest,
 	CalculoPrecoResponse,
 	PreferenciaResponse,
-	TipoPreferencia
+	TipoPreferencia,
+	CriarSolicitacaoRequest,
+	SolicitacaoResponse,
+	StatusSolicitacao
 } from '$lib/types';
 
 const BASE_URL = '/api/v1';
@@ -220,6 +223,30 @@ class ApiClient {
 
 	async removerBloqueio(profissionalID: string): Promise<void> {
 		return this.request('DELETE', `/clientes/me/bloqueios/${profissionalID}`);
+	}
+
+	// Solicitações — cliente
+	async criarSolicitacao(req: CriarSolicitacaoRequest): Promise<SolicitacaoResponse> {
+		return this.request('POST', '/solicitacoes', req);
+	}
+
+	async listarSolicitacoes(filtro?: {
+		status?: StatusSolicitacao;
+		desde?: string;
+		ate?: string;
+	}): Promise<SolicitacaoResponse[]> {
+		const qs = filtro
+			? '?' + new URLSearchParams(filtro as Record<string, string>).toString()
+			: '';
+		return this.request('GET', `/solicitacoes${qs}`);
+	}
+
+	async buscarSolicitacao(id: string): Promise<SolicitacaoResponse> {
+		return this.request('GET', `/solicitacoes/${id}`);
+	}
+
+	async cancelarSolicitacao(id: string): Promise<void> {
+		return this.request('DELETE', `/solicitacoes/${id}`);
 	}
 }
 // TipoPreferencia é re-exportado para módulos que só precisam do cliente.
