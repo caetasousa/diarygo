@@ -14,7 +14,13 @@
 		CONFIRMADA: 'Confirmada',
 		NAO_CONFIRMADA: 'Não confirmada',
 		SUSPENSA: 'Suspensa',
-		DESCREDENCIADA: 'Descredenciada'
+		DESCREDENCIADA: 'Descredenciada',
+		// Solicitação
+		AGUARDANDO: 'Aguardando',
+		ATRIBUIDA: 'Atribuída',
+		EM_ANDAMENTO: 'Em andamento',
+		CONCLUIDA: 'Concluída',
+		CANCELADA: 'Cancelada'
 	};
 
 	const CLASSES: Record<string, string> = {
@@ -26,7 +32,13 @@
 		CONFIRMADA: 'badge-green',
 		NAO_CONFIRMADA: 'badge-red',
 		SUSPENSA: 'badge-red',
-		DESCREDENCIADA: 'badge-red'
+		DESCREDENCIADA: 'badge-red',
+		// Solicitação
+		AGUARDANDO: 'badge-orange',
+		ATRIBUIDA: 'badge-blue',
+		EM_ANDAMENTO: 'badge-blue',
+		CONCLUIDA: 'badge-green',
+		CANCELADA: 'badge-red'
 	};
 </script>
 

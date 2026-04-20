@@ -31,7 +31,7 @@
 	const navCliente: NavGroup[] = [
 		{ section: 'Principal', items: [
 			{ href: '/dashboard', label: 'Visão geral', icon: LayoutDashboard, exact: true },
-			{ href: '/solicitacoes', label: 'Meus serviços', icon: CalendarCheck },
+			{ href: '/dashboard/solicitacoes', label: 'Meus serviços', icon: CalendarCheck },
 		]},
 		{ section: 'Conta', items: [
 			{ href: '/dashboard/perfil', label: 'Meu perfil', icon: User },
