@@ -117,9 +117,16 @@
 		if (campo === 'numCozinhas') numCozinhas = Math.max(0, Math.min(20, numCozinhas + delta));
 	}
 
+	// Converte "YYYY-MM-DDTHH:mm" (local) para ISO 8601 UTC completo que o backend aceita.
+	function toISO(local: string): string {
+		if (!local) return '';
+		return new Date(local).toISOString();
+	}
+
 	async function irParaResumo() {
 		calculando = true;
 		try {
+			const iso = toISO(dataServico);
 			calculo = await api.calcularPreco({
 				categoria_id: categoriaID,
 				regiao_id: regiaoID,
@@ -129,7 +136,7 @@
 				num_cozinhas: numCozinhas,
 				opcionais_ids: Array.from(opcionaisSelecionados),
 				frequencia,
-				data_servico: dataServico || undefined
+				data_servico: iso || undefined
 			});
 			step = 3;
 		} catch (e: unknown) {
@@ -153,7 +160,7 @@
 				num_cozinhas: numCozinhas,
 				opcionais_ids: Array.from(opcionaisSelecionados),
 				frequencia,
-				data_servico: dataServico,
+				data_servico: toISO(dataServico),
 				observacao: observacao || undefined
 			});
 			window.location.href = `/dashboard/solicitacoes/${resp.id}`;
@@ -456,11 +463,26 @@
 		transition: border-color 0.12s;
 		width: 100%;
 		box-sizing: border-box;
+		font-family: inherit;
+		color-scheme: dark;
 	}
 	.field select:focus,
 	.field textarea:focus { border-color: var(--color-orange-10); }
 
-	.field textarea { resize: vertical; font-family: inherit; line-height: 1.5; }
+	/* Caret customizado para <select> — remove o nativo e coloca um chevron no tema */
+	.field select {
+		appearance: none;
+		-webkit-appearance: none;
+		-moz-appearance: none;
+		padding-right: 36px;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a1a1aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+		background-repeat: no-repeat;
+		background-position: right 12px center;
+		cursor: pointer;
+	}
+	.field select option { background: var(--color-black); color: var(--color-text-primary); }
+
+	.field textarea { resize: vertical; line-height: 1.5; }
 
 	/* Cômodos */
 	.comodos {
