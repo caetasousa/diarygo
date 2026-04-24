@@ -64,6 +64,14 @@ class ApiClient {
 			body: body ? JSON.stringify(body) : undefined
 		});
 
+		// 204 No Content e outras respostas sem corpo não têm JSON para parsear.
+		if (res.status === 204 || res.headers.get('content-length') === '0') {
+			if (!res.ok) {
+				throw new Error(`Erro ${res.status}`);
+			}
+			return undefined as T;
+		}
+
 		const data = await res.json();
 
 		if (!res.ok) {
